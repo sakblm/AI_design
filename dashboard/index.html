@@ -5,44 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>成長ボクセルワールド ビューア</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Three.js for 3D Voxel World -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- TWEEN.js for smooth animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
-    <!-- Chart.js for Skills Radar Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap');
         
-        body {
-            font-family: 'M PLUS Rounded 1c', sans-serif;
-            background-color: #f8fafc;
-        }
-
-        .mono-font {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        #canvas-container {
-            width: 100%;
-            height: 100%;
-            cursor: grab;
-        }
-        #canvas-container:active {
-            cursor: grabbing;
-        }
-
+        body { font-family: 'M PLUS Rounded 1c', sans-serif; background-color: #f8fafc; }
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #canvas-container { width: 100%; height: 100%; cursor: grab; }
+        #canvas-container:active { cursor: grabbing; }
         .task-completed { opacity: 0.6; }
         .task-completed .task-title { text-decoration: line-through; color: #64748b; }
-
         .career-path { position: relative; padding-left: 24px; border-left: 2px dashed #e2e8f0; margin-left: 12px; }
         .career-step { position: relative; margin-bottom: 24px; }
         .career-step::before {
@@ -55,14 +31,11 @@
 </head>
 <body class="h-screen w-full flex flex-col overflow-hidden text-slate-800">
 
-    <!-- ヘッダー -->
     <header class="bg-white border-b border-slate-200 shadow-sm p-4 z-10 flex justify-between items-center shrink-0">
         <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center text-white font-bold text-xl">Y</div>
             <div>
-                <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
-                    山田 花子 <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded mono-font">VIEWER MODE</span>
-                </h1>
+                <h1 class="font-bold text-lg leading-tight flex items-center gap-2">山田 花子 <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded mono-font">VIEWER MODE</span></h1>
                 <p class="text-xs text-slate-500">2026年度 上期テーマ：AIを活用した業務の仕組み化</p>
             </div>
         </div>
@@ -84,9 +57,7 @@
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-        <!-- 左側：3Dボクセルワールド -->
         <section class="flex-1 bg-sky-50 relative overflow-hidden" id="world-section">
             <div id="canvas-container" class="absolute inset-0"></div>
             
@@ -105,12 +76,11 @@
             
             <div class="absolute bottom-4 left-4 pointer-events-none z-10 bg-white/80 backdrop-blur-md rounded-lg p-3 shadow-sm border border-white flex gap-4">
                 <div class="flex items-center gap-2"><div class="w-4 h-4 border border-slate-400 bg-slate-200 flex items-center justify-center text-[8px] text-slate-700">🏢</div><span class="text-xs font-bold text-slate-600">AI / ビル</span></div>
-                <div class="flex items-center gap-2"><div class="w-4 h-4 border border-amber-600 bg-amber-200 flex items-center justify-center text-[8px] text-amber-800">🏥</div><span class="text-xs font-bold text-slate-600">Design / 街区</span></div>
-                <div class="flex items-center gap-2"><div class="w-4 h-4 border border-emerald-800 bg-emerald-700 flex items-center justify-center text-[8px] text-white">🌳</div><span class="text-xs font-bold text-slate-600">Docs / 牧場・森</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 border border-amber-600 bg-amber-200 flex items-center justify-center text-[8px] text-amber-800">🏠</div><span class="text-xs font-bold text-slate-600">Design / 住宅地</span></div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 border border-emerald-800 bg-emerald-700 flex items-center justify-center text-[8px] text-white">🌳</div><span class="text-xs font-bold text-slate-600">Docs / 施設・森</span></div>
             </div>
         </section>
 
-        <!-- 右側：ダッシュボード -->
         <section class="w-full md:w-[450px] bg-white flex flex-col shadow-[-10px_0_20px_rgba(0,0,0,0.02)] z-20 border-l border-slate-200 flex-shrink-0">
             <div class="flex border-b border-slate-200 bg-slate-50">
                 <button onclick="switchTab('tasks')" id="tab-tasks" class="flex-1 py-3 text-sm font-bold text-slate-800 border-b-2 border-slate-800 transition-colors">案件データ</button>
@@ -195,7 +165,11 @@
 
     <script>
         const state = {
-            exp: 0, level: 1, maxExp: 100, hasSpawnedCreatures: false,
+            exp: 0, level: 1, maxExp: 100, 
+            hasSpawnedCreatures: false,
+            hasFarm: false, hasLibrary: false, hasArchive: false, hasLab: false,
+            hasSchool: false, hasHospital: false, hasShop: false,
+            
             skills: { labels: ['AI活用/整理', 'UI/UX Design', '言語化/資料化', 'レビュー/品質', '業務の型化'], current: [30, 70, 40, 50, 20], target: [80, 85, 80, 80, 90] },
             techSkills: { labels: ['Figma', 'Prompting', 'HTML/CSS', 'Markdown', 'Confluence'], data: [75, 20, 50, 40, 30] },
             history: { labels: ['Start'], totalExp: [0], gainedExp: [0] },
@@ -297,11 +271,11 @@
         function logWorldEvent(msg) { const el = document.getElementById('world-log'); el.style.opacity = 0; setTimeout(()=>{ el.innerText = msg; el.style.opacity = 1; },300); }
 
         // ==========================================
-        // 3. Three.js ボクセルワールド構築 (超リッチ化 + 線路追加)
+        // 3. Three.js ボクセルワールド構築
         // ==========================================
         let scene, camera, renderer, voxelGroup, creaturesGroup;
         let railwayGroup, trainModel;
-        let hasRailway = false; // ★ 線路解放フラグ
+        let hasRailway = false; 
         const trainData = { angle: 0, radius: 0 };
         
         const gridState = new Map();   
@@ -409,7 +383,7 @@
             currentIslandRadius = newR;
             
             if (hasRailway) {
-                buildRailway(currentIslandRadius + 1); // 線路を外周に敷く
+                buildRailway(currentIslandRadius + 1.5); 
             }
 
             const cont = document.getElementById('canvas-container'), asp = cont.clientWidth / cont.clientHeight, d = 12 + (currentIslandRadius-5)*1.5;
@@ -434,8 +408,8 @@
             const gr = groundState.get(`${x},${z}`); if(!gr || gr.deco) return;
             const group = new THREE.Group(), t = Math.random();
             if(t>0.6) {
+                // 木は確実に1マス (0.8x0.8) に収める
                 const tr = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.8,0.3), new THREE.MeshLambertMaterial({color:0x5c4033})); tr.position.y=0.4; tr.add(new THREE.LineSegments(new THREE.EdgesGeometry(tr.geometry), edgeMat));
-                // ★ 木が確実に1マスに収まるようサイズ調整
                 const lv = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.8,0.8), new THREE.MeshLambertMaterial({color:0x3e7a2b})); lv.position.y=1.0; lv.add(new THREE.LineSegments(new THREE.EdgesGeometry(lv.geometry), edgeMat));
                 group.add(tr, lv);
             } else if(t>0.3) {
@@ -460,26 +434,59 @@
             }
             if(gr.isGrass) {
                 gr.isGrass = false;
-                gr.mesh.material = dirtMats; // 草を剥がす
+                gr.mesh.material = dirtMats; // 完全に草を剥がす
             }
         }
 
+        // ★ 建物仕様の定義 (バリエーションと制限)
         function getBuildingSpecs(type, style) {
             let w=1, d=1; const group = new THREE.Group();
             const addBlock = (bw, bh, bd, y, color, ox=0, oz=0) => {
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd), new THREE.MeshLambertMaterial({color})); mesh.position.set(ox,y,oz); mesh.castShadow=mesh.receiveShadow=true; mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat)); group.add(mesh); return mesh;
             };
+            
             if(type==='ai') {
                 return { w:1, d:1, build:()=>{ const h=1.5+Math.random()*2; addBlock(0.7,h,0.7,h/2,0xe2e2e2); addBlock(0.4,h+0.2,0.4,(h+0.2)/2,0x4dd0e1); addBlock(0.1,0.6,0.1,h+0.3,0x94a3b8); return group; } };
             } else if(type==='design') {
-                if(style===1) { return { w:1, d:1, build:()=>{ addBlock(0.8,0.6,0.8,0.3,0xe4cc9a); addBlock(0.9,0.4,0.9,0.6+0.2,0xb95b4f); addBlock(0.25,0.35,0.05,0.175,0x5c4033,0,0.4); return group; } }; }
-                else if(style===2) { return { w:2, d:1, build:()=>{ addBlock(1.9,0.6,0.8,0.3,0xffedd5,0.5,0); addBlock(2.0,0.2,0.9,0.6+0.1,0xd97706,0.5,0); addBlock(1.8,0.1,0.3,0.4,0xef4444,0.5,0.45).rotation.x=-0.3; return group; } }; }
-                else if(style===3) { return { w:2, d:2, build:()=>{ addBlock(1.9,1.2,1.9,0.6,0xffffff,0.5,0.5); addBlock(0.2,0.6,0.05,0.8,0xef4444,0.5,1.46); addBlock(0.6,0.2,0.05,0.8,0xef4444,0.5,1.46); return group; } }; }
-                else { return { w:3, d:2, build:()=>{ addBlock(2.8,0.6,1.8,0.3,0xfcd34d,1,0.5); addBlock(0.6,1.5,0.6,0.75,0xfcd34d,1,0.5); addBlock(0.4,0.4,0.05,1.2,0xffffff,1,0.81); return group; } }; }
+                // 住宅地化のため、家(1)以外の制限とデフォルト化
+                let dStyle = style;
+                if (dStyle === 1 && state.hasShop) dStyle = 0;
+                if (dStyle === 2 && state.hasHospital) dStyle = 0;
+                if (dStyle === 3 && state.hasSchool) dStyle = 0;
+
+                if(dStyle===1) { 
+                    state.hasShop = true;
+                    return { w:2, d:1, build:()=>{ addBlock(1.9,0.6,0.8,0.3,0xffedd5,0.5,0); addBlock(2.0,0.2,0.9,0.6+0.1,0xd97706,0.5,0); addBlock(1.8,0.1,0.3,0.4,0xef4444,0.5,0.45).rotation.x=-0.3; return group; } }; 
+                } else if(dStyle===2) { 
+                    state.hasHospital = true;
+                    return { w:2, d:2, build:()=>{ addBlock(1.9,1.2,1.9,0.6,0xffffff,0.5,0.5); addBlock(0.2,0.6,0.05,0.8,0xef4444,0.5,1.46); addBlock(0.6,0.2,0.05,0.8,0xef4444,0.5,1.46); return group; } }; 
+                } else if(dStyle===3) { 
+                    state.hasSchool = true;
+                    return { w:3, d:2, build:()=>{ addBlock(2.8,0.6,1.8,0.3,0xfcd34d,1,0.5); addBlock(0.6,1.5,0.6,0.75,0xfcd34d,1,0.5); addBlock(0.4,0.4,0.05,1.2,0xffffff,1,0.81); return group; } }; 
+                } else { 
+                    // デフォルトの家
+                    return { w:1, d:1, build:()=>{ addBlock(0.8,0.6,0.8,0.3,0xe4cc9a); addBlock(0.9,0.4,0.9,0.6+0.2,0xb95b4f); addBlock(0.25,0.35,0.05,0.175,0x5c4033,0,0.4); return group; } }; 
+                }
             } else {
-                if(style===1) { // 1回目：知識の樹（1マスに厳格に収める）
-                    return { w:1, d:1, build:()=>{ addBlock(0.3,1.0,0.3,0.5,0x5c4033); addBlock(0.9,0.9,0.9,1.0,0x0f5132); return group; } }; 
-                } else if(style===2) { // 2回目：牧場 (3x2)
+                // Docsの建物をローテーション、かつフラグで重複防止
+                let docStyle = style % 5;
+                if (docStyle === 0 && state.hasLibrary) docStyle = 4; 
+                if (docStyle === 1 && state.hasFarm) docStyle = 4;
+                if (docStyle === 2 && state.hasArchive) docStyle = 4;
+                if (docStyle === 3 && state.hasLab) docStyle = 4;
+
+                if (docStyle === 0) { 
+                    state.hasLibrary = true;
+                    // ★ 図書館：茶色壁・白い屋根・黄色いドア (2x2)
+                    return { w:2, d:2, build:()=>{ 
+                        addBlock(1.8, 0.8, 1.8, 0.4, 0x5c4033, 0.5, 0.5); // 茶色の壁
+                        addBlock(2.0, 0.4, 2.0, 1.0, 0xffffff, 0.5, 0.5); // 白い屋根
+                        addBlock(0.6, 0.5, 0.1, 0.25, 0xfcd34d, 0.5, 1.4); // 黄色のドア
+                        return group; 
+                    } };
+                } else if (docStyle === 1) { 
+                    state.hasFarm = true;
+                    // 牧場 (3x2)
                     return { w:3, d:2, build:()=>{ 
                         addBlock(2.9,0.2,0.05,0.1,0x8b5a2b, 1.0, 0.95); addBlock(2.9,0.2,0.05,0.1,0x8b5a2b, 1.0, 0.05); 
                         addBlock(0.05,0.2,0.9,0.1,0x8b5a2b, -0.45, 0.5); addBlock(0.05,0.2,0.9,0.1,0x8b5a2b, 2.45, 0.5);
@@ -487,16 +494,42 @@
                         addBlock(0.3,0.25,0.4,0.125,0xfff1f2, 1.5, 0.3); addBlock(0.2,0.2,0.25,0.25,0xe2e8f0, 1.5, 0.4); 
                         addBlock(2.8,0.05,1.8,0.025,0x4ade80, 1.0, 0.5); return group; 
                     } }; 
-                } else { // 3回目(0)：図書館 (2x2) - 4マスの木に見えないように建物化
-                    return { w:2, d:2, build:()=>{ addBlock(1.8,1.0,1.8,0.5,0x5c4033,0.5,0.5); addBlock(1.9,0.3,1.9,1.15,0x9ca3af,0.5,0.5); addBlock(0.6,0.5,0.1,0.25,0xfde047,0.5,1.4); return group; } }; 
+                } else if (docStyle === 2) { 
+                    state.hasArchive = true;
+                    // 公文書館 (2x2 石造り)
+                    return { w:2, d:2, build:()=>{ 
+                        addBlock(1.8,0.4,1.8,0.2,0xd4d4d8,0.5,0.5); 
+                        addBlock(0.3,0.8,0.3,0.8,0xe5e7eb,0.1,0.1); 
+                        addBlock(0.3,0.8,0.3,0.8,0xe5e7eb,0.9,0.1); 
+                        addBlock(0.3,0.8,0.3,0.8,0xe5e7eb,0.1,0.9); 
+                        addBlock(0.3,0.8,0.3,0.8,0xe5e7eb,0.9,0.9); 
+                        addBlock(1.8,0.4,1.8,1.4,0x9ca3af,0.5,0.5); 
+                        return group; 
+                    } };
+                } else if (docStyle === 3) { 
+                    state.hasLab = true;
+                    // 研究所 (2x1 モダン)
+                    return { w:2, d:1, build:()=>{ 
+                        addBlock(1.8,0.8,0.8,0.4,0xf8fafc,0.5,0); 
+                        addBlock(1.9,0.2,0.9,0.9,0x0ea5e9,0.5,0); 
+                        addBlock(0.6,0.5,0.85,0.3,0x38bdf8,0.5,0); 
+                        return group; 
+                    } };
+                } else { 
+                    // デフォルト: 知識の樹（1x1）
+                    return { w:1, d:1, build:()=>{ 
+                        addBlock(0.3,1.0,0.3,0.5,0x5c4033); 
+                        addBlock(0.9,0.9,0.9,1.0,0x0f5132); 
+                        return group; 
+                    } }; 
                 }
             }
         }
 
         function buildVoxelStructure(taskType) {
             let style = 0;
-            if(taskType==='design') style = state.taskStats.design % 4;
-            else if(taskType==='docs') style = state.taskStats.docs % 3;
+            if(taskType==='design') style = state.taskStats.design;
+            else if(taskType==='docs') style = state.taskStats.docs;
 
             const specs = getBuildingSpecs(taskType, style);
             let bx, bz, attempts = 0, canBuild = false;
@@ -534,7 +567,7 @@
             checkAndBuildJoints(bx, bz, specs.w, specs.d, taskType);
         }
 
-        // ★ 道路生成（橋は作らない、水や他建物でストップ）
+        // ★ 道路生成（橋は作らない、水にぶつかったらストップ）
         function createRoads(bx, bz, w, d) {
             const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
             dirs.forEach(([dx, dz]) => {
@@ -551,9 +584,9 @@
                     const ground = groundState.get(`${nx},${nz}`);
                     if(ground) {
                         if(ground.isWater) {
-                            break; // 川に当たったら橋を作らずに止まる
+                            break; // 川に当たったらストップ
                         } else if(!ground.isRoad) {
-                            removeDecoration(nx, nz); // 道路予定地の木を消す
+                            removeDecoration(nx, nz); // 道路予定地の木を完全に消す
                             ground.isRoad = true; 
                             ground.mesh.material = roadMats; 
                         }
@@ -563,6 +596,8 @@
         }
 
         function checkAndBuildJoints(bx, bz, w, d, type) {
+            if (type === 'docs') return; // Docsはジョイントを作らない
+
             const dirs = [[1,0], [-1,0], [0,1], [0,-1]];
             for(let dx=0; dx<w; dx++){
                 for(let dz=0; dz<d; dz++){
@@ -577,7 +612,7 @@
                             let bw = isX ? 1.0 : 0.3, bd = isX ? 0.3 : 1.0, bh = 0.3, by = 0, col = 0xffffff;
                             if(type==='ai') { by=1.0; bh=0.4; col=0x4dd0e1; }
                             else if(type==='design') { by=0.15; bh=0.2; col=0xe4cc9a; }
-                            else if(type==='docs') { by=0.8; bh=0.6; bw = isX?1.0:0.5; bd = isX?0.5:1.0; col=0x0f5132; }
+                            
                             const mesh = new THREE.Mesh(new THREE.BoxGeometry(bw,bh,bd), new THREE.MeshLambertMaterial({color:col}));
                             mesh.position.set((cx+tx)/2, by, (cz+tz)/2); mesh.castShadow=mesh.receiveShadow=true; mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), edgeMat));
                             group.add(mesh); group.scale.set(0.01,0.01,0.01); voxelGroup.add(group);
@@ -641,25 +676,31 @@
             camera.left = -d*asp; camera.right = d*asp; camera.top = d; camera.bottom = -d; camera.updateProjectionMatrix(); renderer.setSize(cont.clientWidth, cont.clientHeight);
         }
 
+        // ==========================================
+        // 4. データ同期シミュレーション
+        // ==========================================
         function simulateDataSync() {
             const btn = document.getElementById('simulate-btn'); btn.disabled = true; btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 同期中...';
 
             setTimeout(() => {
-                const cCount = state.projects.reduce((a,p)=>a+p.tasks.filter(t=>t.completed).length,0);
+                // プロジェクト単位での完了判定
+                const completedProjectsCount = state.projects.filter(p => p.tasks.every(t => t.completed)).length;
                 
-                // 追加案件の割り込みロジック
-                if(cCount===4 && state.projects.length===3) { 
+                // ★ P1完了時にP4を追加
+                if(completedProjectsCount === 1 && state.projects.length === 3) { 
                     state.projects.push({id:'p4',name:'新規追加案件：決済フローのUI設計',tasks:[{id:'t_ex1',title:'仕様の要件定義とAI情報整理',type:'ai',exp:25,completed:false},{id:'t_ex2',title:'Figmaで新規画面モック作成',type:'design',exp:40,completed:false},{id:'t_ex3',title:'開発チームへの仕様連携',type:'docs',exp:20,completed:false}]}); 
                     expandWorld(2); btn.disabled=false; btn.innerHTML='データ同期を進める'; return; 
                 }
-                if(cCount===8 && state.projects.length===4) { 
+                // ★ P2完了（P1, P2完了）時にP5を追加
+                if(completedProjectsCount === 2 && state.projects.length === 4) { 
                     state.projects.push({id:'p5',name:'全社デザインシステム構築',tasks:[{id:'t_ex4',title:'現状のコンポーネント洗い出し',type:'ai',exp:25,completed:false},{id:'t_ex5',title:'Figmaライブラリの構築',type:'design',exp:45,completed:false},{id:'t_ex6',title:'共通UIルールの策定・公開',type:'docs',exp:30,completed:false}]}); 
                     expandWorld(2); btn.disabled=false; btn.innerHTML='データ同期を進める'; return; 
                 }
-                if(cCount===11 && state.projects.length===5) { 
+                // ★ P5まで全て完了（P1〜P5完了）時にP6を追加し、電車を開通させる
+                if(completedProjectsCount === 5 && state.projects.length === 5) { 
                     state.projects.push({id:'p6',name:'ユーザーテストと改善サイクル',tasks:[{id:'t_ex7',title:'インタビューのAI文字起こし・要約',type:'ai',exp:25,completed:false},{id:'t_ex8',title:'フィードバック反映プロトタイプ作成',type:'design',exp:40,completed:false},{id:'t_ex9',title:'テスト結果のレポート資料化',type:'docs',exp:25,completed:false}]}); 
                     hasRailway = true; // ★ Project 6追加時に環状線開通
-                    expandWorld(2); btn.disabled=false; btn.innerHTML='データ同期を進める'; return; 
+                    expandWorld(3); btn.disabled=false; btn.innerHTML='データ同期を進める'; return; 
                 }
 
                 // 未完了タスクの処理
@@ -687,15 +728,22 @@
             state.exp += task.exp; let nLv = 1, cMax = levels[1].expRequired;
             for(let i=0; i<levels.length; i++) { if(state.exp>=levels[i].expRequired) { nLv = levels[i].level; cMax = i+1<levels.length ? levels[i+1].expRequired : state.exp; } }
             state.level = nLv; state.maxExp = cMax; state.history.labels.push(task.title.substring(0,6)+'...'); state.history.totalExp.push(state.exp); state.history.gainedExp.push(task.exp);
-            if(task.type==='ai') { state.taskStats.ai++; state.metrics[0].current++; state.skills.current[0]=Math.min(100,state.skills.current[0]+10); state.techSkills.data[1]=Math.min(100,state.techSkills.data[1]+15); }
+            
+            // タスクの増加
+            if(task.type==='ai') state.taskStats.ai++;
+            if(task.type==='design') state.taskStats.design++;
+            if(task.type==='docs') state.taskStats.docs++; 
+
+            if(task.type==='ai') { state.metrics[0].current++; state.skills.current[0]=Math.min(100,state.skills.current[0]+10); state.techSkills.data[1]=Math.min(100,state.techSkills.data[1]+15); }
             if(task.title.includes('作成')) { state.metrics[1].current++; state.skills.current[4]=Math.min(100,state.skills.current[4]+15); }
             if(task.type==='docs') { state.metrics[2].current++; state.skills.current[2]=Math.min(100,state.skills.current[2]+12); state.techSkills.data[3]=Math.min(100,state.techSkills.data[3]+10); state.techSkills.data[4]=Math.min(100,state.techSkills.data[4]+15); }
-            if(task.type==='design') { state.taskStats.design++; state.skills.current[1]=Math.min(100,state.skills.current[1]+5); state.techSkills.data[0]=Math.min(100,state.techSkills.data[0]+5); state.techSkills.data[2]=Math.min(100,state.techSkills.data[2]+10); }
-            if(task.type==='docs') state.taskStats.docs++; 
+            if(task.type==='design') { state.skills.current[1]=Math.min(100,state.skills.current[1]+5); state.techSkills.data[0]=Math.min(100,state.techSkills.data[0]+5); state.techSkills.data[2]=Math.min(100,state.techSkills.data[2]+10); }
+            
             if(radarChart) { radarChart.data.datasets[0].data = [...state.skills.current]; radarChart.update(); }
             if(techBarChart) { techBarChart.data.datasets[0].data = [...state.techSkills.data]; techBarChart.update(); }
             if(lineChart) lineChart.update();
             if(doughnutChart) { doughnutChart.data.datasets[0].data = [state.taskStats.ai, state.taskStats.design, state.taskStats.docs]; doughnutChart.update(); }
+            
             buildVoxelStructure(task.type);
             const tC = state.projects.reduce((a,p)=>a+p.tasks.length,0), cC = state.projects.reduce((a,p)=>a+p.tasks.filter(t=>t.completed).length,0);
             greeningIsland(cC/tC); renderTasks(); renderMetrics(); updateDashboardCounters(); updateAiInsights();
