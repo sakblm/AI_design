@@ -1,0 +1,1832 @@
+<!-- @startingPoint section="Dashboard" subtitle="GhostUsers 3-column validation dashboard — setup wizard + Dynamic + Static" viewport="1440x900" -->
+<!-- @dsCard group="Dashboard" viewport="1440x900" name="Dashboard" subtitle="Setup wizard → Dynamic → Scan & Override → Static" -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostUsers — Dashboard</title>
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="80" fill="#fff"/>
+  <rect x="0" y="0" width="28" height="80" fill="#f7f7f7"/>
+  <circle cx="14" cy="18" r="6" fill="none" stroke="#1a1a1a" stroke-width="1.2"/>
+  <circle cx="14" cy="18" r="2.5" fill="#ff4d2c"/>
+  <rect x="36" y="14" width="76" height="52" rx="8" fill="#fff" stroke="#e8e8e8" stroke-width="1"/>
+  <rect x="44" y="22" width="60" height="8" rx="4" fill="#f0f0f0"/>
+  <rect x="44" y="34" width="40" height="20" rx="6" fill="#1a1a1a"/>
+  <rect x="88" y="34" width="14" height="20" rx="6" fill="#ff4d2c"/>
+  <rect x="44" y="58" width="60" height="4" rx="2" fill="#e8e8e8"/>
+</svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Inter,"Noto Sans JP",sans-serif;background:#fff;color:#1a1a1a;-webkit-font-smoothing:antialiased;overflow:hidden;height:100vh;}
+@keyframes ghost-pulse    {0%,100%{box-shadow:0 0 0 0 rgba(26,26,26,.2)}50%{box-shadow:0 0 0 5px rgba(26,26,26,.06)}}
+@keyframes ghost-float-0  {0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes ghost-float-1  {0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes ghost-float-2  {0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+@keyframes ghost-float-3  {0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes ghost-live-dot {0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes ghost-reveal   {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ghost-fadein   {from{opacity:0}to{opacity:1}}
+@keyframes ghost-log      {from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ghost-scan     {0%{top:-2px}100%{top:100%}}
+@keyframes ghost-score    {0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes ghost-pulse-green {0%,100%{box-shadow:0 0 0 0 rgba(63,176,105,.3)}50%{box-shadow:0 0 0 5px rgba(63,176,105,.08)}}
+@keyframes ghost-stuck-ring{0%,100%{outline-offset:0px;outline-color:rgba(255,77,44,.8)}50%{outline-offset:2px;outline-color:rgba(255,77,44,.3)}}
+@keyframes ghost-setup-in {from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.scan-overlay{position:fixed;inset:0;z-index:999;pointer-events:none;}
+.scan-line{position:absolute;left:0;right:0;height:1px;background:#ff4d2c;animation:ghost-scan 700ms ease-out forwards;}
+input:focus{outline:none;}
+textarea:focus{outline:none;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+
+
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ─── DATA ─── */
+const PERSONAS = [
+{ id: 'P-001', name: '田中健', age: 42, role: 'ECサイト利用者', initial: '田' },
+{ id: 'P-002', name: '山本花', age: 28, role: '初回訪問者', initial: '山' },
+{ id: 'P-003', name: '中村誠', age: 55, role: 'シニアユーザー', initial: '中' },
+{ id: 'P-004', name: '村田彩', age: 22, role: 'スマホネイティブ', initial: '村' },
+{ id: 'P-005', name: '佐藤光', age: 35, role: 'リピーター', initial: '佐' },
+{ id: 'P-006', name: '伊藤麻', age: 31, role: '比較検討中', initial: '伊' },
+{ id: 'P-007', name: '鈴木太', age: 48, role: '初回購入', initial: '鈴' },
+{ id: 'P-008', name: '渡辺理', age: 26, role: 'ギフト購入', initial: '渡' }];
+
+const DYN_STATES = ['active', 'active', 'stuck', 'active', 'active', 'done', 'active', 'stuck'];
+const ISSUES = [
+{ tone: 'alert', label: 'カートボタンが見つからない', count: 5, pct: 62, desc: '商品詳細ページ → カート追加の導線が不明瞭。5名が離脱。' },
+{ tone: 'alert', label: '決済フローの入力項目が多い', count: 3, pct: 37, desc: 'クレジットカード入力で P-003・P-007・P-001 が離脱。' },
+{ tone: 'default', label: '在庫表示が分かりにくい', count: 2, pct: 25, desc: '在庫残少の表示が目立たず、スルーされた。' }];
+
+const LOGS = [
+{ id: 1, persona: 'P-001', initial: '田', state: 'stuck', time: '00:03:12', text: 'カートボタンを 3 回タップしたが反応なし。' },
+{ id: 2, persona: 'P-002', initial: '山', state: 'active', time: '00:03:45', text: '商品画像をスワイプして詳細を確認中。' },
+{ id: 3, persona: 'P-007', initial: '鈴', state: 'active', time: '00:04:01', text: 'レビューセクションに移動し、星評価を確認。' },
+{ id: 4, persona: 'P-003', initial: '中', state: 'stuck', time: '00:04:28', text: '支払い方法の欄が多すぎて迷っています……' },
+{ id: 5, persona: 'P-005', initial: '佐', state: 'done', time: '00:05:14', text: '購入完了。流れはスムーズでした。' },
+{ id: 6, persona: 'P-008', initial: '渡', state: 'active', time: '00:05:30', text: 'ギフトラッピングオプションを探し中。' }];
+
+const COUNCIL = [
+{ id: 'P-001', initial: '田', side: 'left', state: 'stuck', text: 'カートボタンがどこにあるか最後まで分からなかったです。' },
+{ id: 'P-002', initial: '山', side: 'right', state: 'done', text: '全体的にシンプルで使いやすかったです。' },
+{ id: 'P-003', initial: '中', side: 'left', state: 'stuck', text: '支払い画面の入力項目が多すぎて諦めました……' },
+{ id: 'P-005', initial: '佐', side: 'right', state: 'done', text: 'レビューが充実していたので安心して購入できました。' },
+{ id: 'P-007', initial: '鈴', side: 'left', state: 'stuck', text: '「在庫残り少」の表示に気づかず、後から焦りました。' }];
+
+const GRAVES = [
+{ id: 'P-001', initial: '田', elapsed: '00:38', screen: 'Product detail', quote: 'これ買うんでしたっけ' },
+{ id: 'P-003', initial: '中', elapsed: '01:12', screen: 'Payment form', quote: '入力項目が多すぎます……' },
+{ id: 'P-007', initial: '鈴', elapsed: '00:54', screen: 'Cart page', quote: 'ボタンがどこにあるのか……' },
+{ id: 'P-008', initial: '渡', elapsed: '02:05', screen: 'Checkout', quote: 'ギフト設定が見つからない' }];
+
+const HEAT_ZONES = [
+{ x: '62%', y: '52%', w: '30%', h: '12%', intensity: .55 },
+{ x: '10%', y: '62%', w: '45%', h: '10%', intensity: .28 },
+{ x: '55%', y: '68%', w: '35%', h: '8%', intensity: .16 },
+{ x: '5%', y: '20%', w: '40%', h: '25%', intensity: .07 }];
+
+const CHART_RUNS = [{ label: '#244', score: 65 }, { label: '#245', score: 58 }, { label: '#246', score: 71 }, { label: '#247', score: 50 }];
+const REPORTS = [
+{ run: '#249', url: 'example-shop.com', date: '2026-06-28', score: 42, delta: -8, personas: 8, status: 'DONE' },
+{ run: '#248', url: 'example-shop.com', date: '2026-06-27', score: 50, delta: +13, personas: 12, status: 'DONE' },
+{ run: '#247', url: 'example-shop.com', date: '2026-06-26', score: 37, delta: -21, personas: 16, status: 'DONE' },
+{ run: '#246', url: 'beta.myapp.com', date: '2026-06-25', score: 58, delta: +5, personas: 8, status: 'DONE' },
+{ run: '#245', url: 'beta.myapp.com', date: '2026-06-24', score: 53, delta: -12, personas: 12, status: 'DONE' },
+{ run: '#244', url: 'staging.mystore.jp', date: '2026-06-22', score: 71, delta: +18, personas: 8, status: 'DONE' }];
+
+const SWARM_POS = [{ x: 38, y: 28 }, { x: 56, y: 16 }, { x: 73, y: 33 }, { x: 63, y: 56 }, { x: 42, y: 64 }, { x: 24, y: 47 }, { x: 81, y: 20 }, { x: 17, y: 27 }, { x: 51, y: 80 }, { x: 76, y: 68 }, { x: 29, y: 73 }, { x: 86, y: 50 }, { x: 14, y: 60 }, { x: 66, y: 83 }, { x: 49, y: 13 }, { x: 91, y: 37 }, { x: 7, y: 43 }];
+
+/* ─── ATOMS ─── */
+function Badge({ label, tone = 'default', filled = false }) {
+  const C = { live: '#3fb069', stuck: '#ff4d2c', done: '#1a1a1a', alert: '#ff4d2c', default: '#707070', muted: '#a8a8a8', emphasis: '#1a1a1a' };
+  const c = C[tone] || C.default;
+  return <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, letterSpacing: '-0.44px', lineHeight: 1.2,
+    padding: '3px 7px', borderRadius: 4, whiteSpace: 'nowrap', display: 'inline-block',
+    background: filled ? c : '#f7f7f7', color: filled ? '#fff' : c, border: `1px solid ${filled ? c : 'transparent'}` }}>{label}</span>;
+}
+function Dot({ color = '#3fb069' }) {
+  return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: color, animation: 'ghost-live-dot 2200ms ease-in-out infinite', flexShrink: 0 }} />;
+}
+function Av({ initial, state = 'idle', size = 32 }) {
+  const border = { idle: '1px solid #e8e8e8', active: '1.5px solid #3fb069', stuck: '1px solid #ff4d2c', done: '1px solid #1a1a1a', ghost: '1px dashed #a8a8a8' };
+  const bg = { idle: '#f7f7f7', active: '#f7f7f7', stuck: '#fff5f2', done: '#f7f7f7', ghost: '#fafafa' };
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      {state === 'stuck' && <div style={{ position: 'absolute', inset: -3, borderRadius: '50%', border: '1px dashed #ff4d2c', animation: 'ghost-stuck-ring 2500ms ease-in-out infinite', pointerEvents: 'none' }} />}
+      <div style={{ width: size, height: size, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: Math.round(size * .38), fontWeight: 500,
+        color: state === 'stuck' ? '#ff4d2c' : '#1a1a1a', border: border[state] || border.idle, background: bg[state] || bg.idle,
+        animation: state === 'active' ? 'ghost-pulse-green 2200ms ease-in-out infinite' : 'none', transition: 'border-color 200ms ease-out' }}>
+        {initial}
+      </div>
+    </div>);
+
+}
+
+/* ─── SHARED STYLE HELPERS ─── */
+const pill = (active) => ({ fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px',
+  padding: '6px 14px', borderRadius: 500, border: 'none', cursor: 'pointer', transition: 'all 200ms ease-out',
+  background: active ? '#1a1a1a' : 'transparent', color: active ? '#fff' : '#707070' });
+const chip = (active) => ({ fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px',
+  padding: '5px 12px', borderRadius: 500, border: active ? '1px solid #1a1a1a' : '1px solid #e8e8e8', cursor: 'pointer', transition: 'all 200ms ease-out',
+  background: active ? '#1a1a1a' : '#fff', color: active ? '#fff' : '#707070' });
+
+/* ─── A/B COMPARE DETAIL ─── */
+const AB_JOURNEY = [
+{ step: '商品一覧', reachA: 100, reachB: 100, stuckA: 8, stuckB: 6 },
+{ step: '商品詳細', reachA: 92, reachB: 95, stuckA: 15, stuckB: 11 },
+{ step: 'カート', reachA: 76, reachB: 83, stuckA: 28, stuckB: 17 },
+{ step: 'ギフト設定', reachA: 59, reachB: 73, stuckA: 44, stuckB: 26 },
+{ step: '支払い方法', reachA: 44, reachB: 64, stuckA: 38, stuckB: 21 },
+{ step: '完了', reachA: 32, reachB: 54, stuckA: 0, stuckB: 0 }];
+
+const AB_ISSUES = [
+{ cat: '解消', color: '#3fb069', bg: 'rgba(63,176,105,.06)', label: 'カートボタンの視認性', detail: 'sticky 固定後に停滞率が 62% → 17% に激減。完全解消。' },
+{ cat: '改善', color: '#3fb069', bg: 'rgba(63,176,105,.04)', label: '決済フロー入力ステップ', detail: '3ステップ短縮で停滞率 38% → 21% に改善。引き続き最適化余地あり。' },
+{ cat: '継続', color: '#707070', bg: '#f7f7f7', label: '在庫残少の表示', detail: 'A=25% / B=24% とほぼ変化なし。表示スタイルの変更が必要。' },
+{ cat: '新規・悪化', color: '#ff4d2c', bg: 'rgba(255,77,44,.05)', label: 'ギフトラッピング選択 UI', detail: 'B で再設計されたUIが複雑化。停滞率が A 比 +8% 悪化した。' }];
+
+const AB_PERSONA = [
+{ label: '20代', diffScore: -14, diffDone: '+22%', note: '最大改善層' },
+{ label: '30〜40代', diffScore: -9, diffDone: '+18%', note: '' },
+{ label: '50代以上', diffScore: -4, diffDone: '+8%', note: '改善余地あり' },
+{ label: 'IT リテラシー低', diffScore: -2, diffDone: '+5%', note: '依然高い離脱率' }];
+
+const AB_SUGGESTIONS = [
+{ rank: 'P1', label: '支払い方法の入力をさらに簡素化', impact: '−10 点予測', effort: '中', detail: '住所自動補完 + ゲスト購入フロー短縮で 50 代以上の離脱を防げる。' },
+{ rank: 'P2', label: 'ギフト設定 UI の再設計', impact: '−7 点予測', effort: '中', detail: 'B での新 UI が逆効果。ラッピング選択を 1 ステップに統合することを推奨。' },
+{ rank: 'P3', label: '在庫残少バッジを強調スタイルに', impact: '−3 点予測', effort: '低', detail: 'テキストを Coral 色 + アイコン追加で認知率が向上すると推定。' }];
+
+
+function ABCompareDetail({ a, b, onBack }) {
+  const [heatmapMode, setHeatmapMode] = useState('A');
+  const isSame = a.url === b.url;
+  const betterScore = a.score < b.score ? 'A' : 'B';
+  const mono = { fontFamily: '"IBM Plex Mono",monospace' };
+  const ML = { label: 'Confusion Score', valA: a.score, valB: b.score, lowerBetter: true, unit: '', max: 100 };
+  const METRICS = [
+  ML,
+  { label: '完了率', valA: 32, valB: 54, lowerBetter: false, unit: '%', max: 100 },
+  { label: '平均完了時間', valA: '14:32', valB: '11:18', lowerBetter: true, unit: '', isTime: true },
+  { label: '停滞人数', valA: 5, valB: 3, lowerBetter: true, unit: '名', max: 16 },
+  { label: '離脱に近い人数', valA: 3, valB: 1, lowerBetter: true, unit: '名', max: 8 }];
+
+
+  // Heat overlay zones per mode
+  const heatZones = {
+    A: HEAT_ZONES,
+    B: [{ x: '62%', y: '52%', w: '30%', h: '12%', intensity: .28 }, { x: '10%', y: '62%', w: '45%', h: '10%', intensity: .12 }, { x: '55%', y: '68%', w: '35%', h: '8%', intensity: .08 }, { x: '5%', y: '20%', w: '40%', h: '25%', intensity: .04 }],
+    diff: [{ x: '62%', y: '52%', w: '30%', h: '12%', intensity: .0, border: true, improved: true }, { x: '10%', y: '62%', w: '45%', h: '10%', intensity: .05, border: false }, { x: '55%', y: '68%', w: '35%', h: '8%', intensity: .0, border: true, worsened: true }]
+  };
+  const zones = heatZones[heatmapMode] || [];
+
+  const diffColor = (dA, dB, lowerBetter) => {
+    const better = lowerBetter ? dB < dA : dB > dA;
+    return better ? '#3fb069' : dA === dB ? '#707070' : '#ff4d2c';
+  };
+
+  return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 36px' }}>
+      {/* Back + header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#707070', padding: 0, letterSpacing: '-0.005em' }}>← 一覧に戻る</button>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.01em' }}>A/B 比較詳細</span>
+        <span style={{ ...mono, fontSize: 10, fontWeight: 500, padding: '3px 9px', borderRadius: 4,
+            background: isSame ? '#f7f7f7' : '#fff5f2', color: isSame ? '#3fb069' : '#ff4d2c', border: `1px solid ${isSame ? '#3fb069' : 'rgba(255,77,44,.4)'}` }}>
+          {isSame ? '高精度比較' : '参考比較'}
+        </span>
+      </div>
+
+      {/* ① Run info hero */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 36px 1fr', gap: 0, marginBottom: 20, border: '1px solid #e8e8e8', borderRadius: 14, overflow: 'hidden' }}>
+        {(() => {const run = a,better = 'A' === betterScore;return (
+              <div style={{ padding: '20px 24px', background: better ? '#fafafa' : '#fff', minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, background: '#1a1a1a', color: '#fff', padding: '2px 7px', borderRadius: 3, letterSpacing: '-0.36px' }}>PATTERN A</span>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', letterSpacing: '-0.36px' }}>{run.run}</span>
+              {better && <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#3fb069', letterSpacing: '-0.36px' }}>◄ 優位</span>}
+            </div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 44, fontWeight: 500, color: run.score >= 60 ? '#ff4d2c' : run.score >= 45 ? '#707070' : '#3fb069', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 4 }}>{run.score}<span style={{ fontSize: 20, color: '#ff4d2c' }}>.</span></div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.44px', marginBottom: 6 }}>CONFUSION SCORE</div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: run.delta > 0 ? '#ff4d2c' : '#3fb069', fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>{run.delta > 0 ? '+' : ''}{run.delta} vs prev</div>
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '-0.005em', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{run.url}</div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px' }}>{run.date} · {run.personas}体</div>
+          </div>);
+          })()}
+        <div style={{ background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, fontWeight: 500, color: '#a8a8a8' }}>VS</span>
+        </div>
+        {(() => {const run = b,better = 'B' === betterScore;return (
+              <div style={{ padding: '20px 24px', background: better ? '#fafafa' : '#fff', minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, background: '#1a1a1a', color: '#fff', padding: '2px 7px', borderRadius: 3, letterSpacing: '-0.36px' }}>PATTERN B</span>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', letterSpacing: '-0.36px' }}>{run.run}</span>
+              {better && <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#3fb069', letterSpacing: '-0.36px' }}>◄ 優位</span>}
+            </div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 44, fontWeight: 500, color: run.score >= 60 ? '#ff4d2c' : run.score >= 45 ? '#707070' : '#3fb069', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 4 }}>{run.score}<span style={{ fontSize: 20, color: '#ff4d2c' }}>.</span></div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.44px', marginBottom: 6 }}>CONFUSION SCORE</div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: run.delta > 0 ? '#ff4d2c' : '#3fb069', fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>{run.delta > 0 ? '+' : ''}{run.delta} vs prev</div>
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '-0.005em', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{run.url}</div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px' }}>{run.date} · {run.personas}体</div>
+          </div>);
+          })()}
+      </div>
+
+      {/* ② Key metrics */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 14 }}>指標比較</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 0 }}>
+          {METRICS.map((m, i) => {
+              const numA = typeof m.valA === 'number' ? m.valA : null;
+              const numB = typeof m.valB === 'number' ? m.valB : null;
+              const dc = numA !== null && numB !== null ? diffColor(numA, numB, m.lowerBetter) : '#707070';
+              const delta = numA !== null && numB !== null ? m.lowerBetter ? numA - numB : numB - numA : null;
+              return (
+                <div key={m.label} style={{ borderRight: i < 4 ? '1px solid #f7f7f7' : 'none', padding: '0 14px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#707070', letterSpacing: '-0.005em', marginBottom: 8, lineHeight: 1.3 }}>{m.label}</div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 6 }}>
+                  <span style={{ ...mono, fontSize: 15, fontWeight: 500, color: '#a8a8a8', fontVariantNumeric: 'tabular-nums' }}>{m.valA}{m.unit}</span>
+                  <span style={{ ...mono, fontSize: 11, color: '#d4d4d4', alignSelf: 'center' }}>→</span>
+                  <span style={{ ...mono, fontSize: 15, fontWeight: 500, color: dc, fontVariantNumeric: 'tabular-nums' }}>{m.valB}{m.unit}</span>
+                </div>
+                {delta !== null && <span style={{ ...mono, fontSize: 10, color: dc, fontVariantNumeric: 'tabular-nums' }}>{delta > 0 ? '+' : ''}{delta}{m.unit}</span>}
+              </div>);
+
+            })}
+        </div>
+      </div>
+
+      {/* ③ Journey Diff Map */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 16, overflowX: 'auto' }}>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 14 }}>ジャーニー差分マップ</div>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 10, flexShrink: 0 }}>
+          <div style={{ ...mono, fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', width: 70, flexShrink: 0 }} />
+          {AB_JOURNEY.map((j) =>
+            <div key={j.step} style={{ flex: 1, textAlign: 'center', minWidth: 70 }}>
+              <span style={{ fontSize: 10, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{j.step}</span>
+            </div>
+            )}
+        </div>
+        {/* Reach rates */}
+        {[{ label: '到達率', keyA: 'reachA', keyB: 'reachB', max: 100, lowerBetter: false }, { label: '停滞率', keyA: 'stuckA', keyB: 'stuckB', max: 50, lowerBetter: true }].map((row) =>
+          <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}>
+            <div style={{ ...mono, fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', width: 70, flexShrink: 0 }}>{row.label}</div>
+            {AB_JOURNEY.map((j) => {
+              const vA = j[row.keyA],vB = j[row.keyB];
+              const diff = row.lowerBetter ? vA - vB : vB - vA;
+              const isImproved = diff > 0,isWorsened = diff < 0;
+              const dc = isImproved ? '#3fb069' : isWorsened ? '#ff4d2c' : '#a8a8a8';
+              return (
+                <div key={j.step} style={{ flex: 1, minWidth: 70, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 28 }}>
+                    <div title={`A: ${vA}%`} style={{ width: 10, height: `${vA / row.max * 100}%`, background: '#d4d4d4', borderRadius: '2px 2px 0 0', minHeight: 2 }} />
+                    <div title={`B: ${vB}%`} style={{ width: 10, height: `${vB / row.max * 100}%`, background: isImproved ? '#3fb069' : isWorsened ? '#ff4d2c' : '#707070', borderRadius: '2px 2px 0 0', minHeight: 2 }} />
+                  </div>
+                  <span style={{ ...mono, fontSize: 8, color: dc, fontVariantNumeric: 'tabular-nums' }}>
+                    {diff > 0 ? '+' : ''}{diff}%
+                  </span>
+                </div>);
+
+            })}
+          </div>
+          )}
+        <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+          {[{ c: '#d4d4d4', l: 'Pattern A' }, { c: '#3fb069', l: '改善' }, { c: '#ff4d2c', l: '悪化' }, { c: '#707070', l: '変化なし' }].map((lg) =>
+            <div key={lg.l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 1, background: lg.c }} />
+              <span style={{ ...mono, fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.3px' }}>{lg.l}</span>
+            </div>
+            )}
+        </div>
+      </div>
+
+      {/* ④ Issue classification */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 14 }}>課題分類</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {AB_ISSUES.map((iss, i) =>
+            <div key={i} style={{ border: `1px solid ${iss.color === '#ff4d2c' ? 'rgba(255,77,44,.3)' : iss.color === '#3fb069' ? 'rgba(63,176,105,.3)' : '#e8e8e8'}`,
+              borderRadius: 10, padding: '12px 14px', background: iss.bg }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+                <span style={{ ...mono, fontSize: 10, fontWeight: 500, color: iss.color, letterSpacing: '-0.36px' }}>{iss.cat}</span>
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em', marginBottom: 4 }}>{iss.label}</div>
+              <div style={{ fontSize: 11, color: '#707070', lineHeight: 1.5, letterSpacing: '-0.005em' }}>{iss.detail}</div>
+            </div>
+            )}
+        </div>
+      </div>
+
+      {/* ⑤ Heatmap A/B/Diff */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px' }}>ヒートマップ比較</div>
+          <div style={{ display: 'flex', gap: 4, background: '#f7f7f7', borderRadius: 500, padding: 3 }}>
+            {['A', 'B', '差分'].map((m) =>
+              <button key={m} onClick={() => setHeatmapMode(m === '差分' ? 'diff' : m)}
+              style={{ ...mono, fontSize: 10, fontWeight: 500, padding: '4px 12px', borderRadius: 500, border: 'none', cursor: 'pointer',
+                background: heatmapMode === (m === '差分' ? 'diff' : m) ? '#1a1a1a' : 'transparent',
+                color: heatmapMode === (m === '差分' ? 'diff' : m) ? '#fff' : '#707070', transition: 'all 200ms' }}>
+                PATTERN {m}
+              </button>
+              )}
+          </div>
+        </div>
+        <div style={{ position: 'relative', border: '1px solid #e8e8e8', borderRadius: 8, overflow: 'hidden', background: '#fafafa', minHeight: 200 }}>
+          <div style={{ background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '8px 12px', display: 'flex', gap: 6 }}>
+            <div style={{ width: 14, height: 14, borderRadius: 3, background: '#e8e8e8' }} />
+            <div style={{ width: 60, height: 7, borderRadius: 3, background: '#e8e8e8', alignSelf: 'center' }} />
+          </div>
+          <div style={{ display: 'flex', minHeight: 160 }}>
+            <div style={{ width: '48%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 80, height: 100, background: '#e0e0e0', borderRadius: 6 }} />
+            </div>
+            <div style={{ width: '52%', padding: '14px', display: 'flex', flexDirection: 'column', gap: 7, background: '#fff' }}>
+              <div style={{ width: '80%', height: 8, background: '#e8e8e8', borderRadius: 3 }} />
+              <div style={{ width: '60%', height: 7, background: '#f0f0f0', borderRadius: 3 }} />
+              <div style={{ width: '92%', height: 30, borderRadius: 500, background: '#e8e8e8', marginTop: 6 }} />
+              <div style={{ width: '92%', height: 22, borderRadius: 500, background: '#f7f7f7', border: '1px solid #e8e8e8' }} />
+            </div>
+          </div>
+          {/* Heat overlays */}
+          {zones.map((z, i) =>
+            <div key={i} style={{ position: 'absolute', left: z.x, top: z.y, width: z.w, height: z.h, pointerEvents: 'none',
+              background: z.improved ? 'rgba(63,176,105,.3)' : z.worsened ? 'rgba(255,77,44,.12)' : `rgba(255,77,44,${z.intensity || 0.1})`,
+              borderRadius: 4, border: z.border ? z.improved ? '1px dashed rgba(63,176,105,.5)' : '1px dashed rgba(255,77,44,.5)' : 'none' }} />
+            )}
+          <div style={{ position: 'absolute', bottom: 6, right: 8, display: 'flex', gap: 4, alignItems: 'center' }}>
+            {heatmapMode === 'diff' ?
+              [{ c: 'rgba(63,176,105,.3)', l: '改善' }, { c: 'rgba(255,77,44,.12)', l: '悪化' }].map((o) => <React.Fragment key={o.l}><div style={{ width: 10, height: 10, borderRadius: 2, background: o.c }} /><span style={{ ...mono, fontSize: 8, color: '#707070' }}>{o.l}</span></React.Fragment>) :
+              [.08, .25, .45, .6].map((o) => <div key={o} style={{ width: 11, height: 11, borderRadius: 2, background: `rgba(255,77,44,${o})` }} />)
+              }
+          </div>
+        </div>
+      </div>
+
+      {/* ⑥ Persona attribute breakdown */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 14 }}>ペルソナ属性ごとの変化</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto auto', gap: '0 0' }}>
+          {['属性', 'スコア差分', '完了率変化', '備考'].map((h) =>
+            <div key={h} style={{ ...mono, fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', padding: '6px 12px', borderBottom: '1px solid #e8e8e8' }}>{h}</div>
+            )}
+          {AB_PERSONA.map((p, i) => [
+            <div key={`l${i}`} style={{ fontSize: 11, color: '#1a1a1a', letterSpacing: '-0.005em', padding: '10px 12px', borderBottom: '1px solid #f7f7f7' }}>{p.label}</div>,
+            <div key={`s${i}`} style={{ ...mono, fontSize: 11, fontWeight: 500, color: '#3fb069', fontVariantNumeric: 'tabular-nums', padding: '10px 12px', borderBottom: '1px solid #f7f7f7' }}>{p.diffScore}</div>,
+            <div key={`d${i}`} style={{ ...mono, fontSize: 11, color: '#3fb069', fontVariantNumeric: 'tabular-nums', padding: '10px 12px', borderBottom: '1px solid #f7f7f7' }}>{p.diffDone}</div>,
+            <div key={`n${i}`} style={{ fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.005em', padding: '10px 12px', borderBottom: '1px solid #f7f7f7' }}>{p.note}</div>]
+            )}
+        </div>
+      </div>
+
+      {/* ⑦ AI Summary + suggestions */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 4 }}>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 12 }}>AI 比較サマリー</div>
+        <div style={{ fontSize: 13, color: '#1a1a1a', lineHeight: 1.7, letterSpacing: '-0.005em', marginBottom: 16 }}>
+          B（{b.run}）はカートボタンの sticky 固定により完了率が <strong>+22%</strong> 改善し、Confusion Score が <strong>{a.score - b.score} 点</strong> 低下しました。
+          一方でギフト設定 UI の再設計が逆効果となり、新規停滞が発生しています。
+          50 代以上・IT リテラシー低層への改善余地が最も大きく残っています。
+        </div>
+        <div style={{ ...mono, fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 12 }}>次の改善候補</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {AB_SUGGESTIONS.map((s, i) =>
+            <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px',
+              border: '1px solid #e8e8e8', borderRadius: 10, background: '#fff' }}>
+              <span style={{ ...mono, fontSize: 10, fontWeight: 500, background: '#1a1a1a', color: '#fff', padding: '2px 6px', borderRadius: 3, letterSpacing: '-0.36px', flexShrink: 0 }}>{s.rank}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em', marginBottom: 3 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: '#707070', lineHeight: 1.5, letterSpacing: '-0.005em' }}>{s.detail}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                <span style={{ ...mono, fontSize: 10, color: '#3fb069', letterSpacing: '-0.36px' }}>{s.impact}</span>
+                <span style={{ ...mono, fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px' }}>工数 {s.effort}</span>
+              </div>
+            </div>
+            )}
+        </div>
+      </div>
+      </div>
+    </div>);
+
+}
+
+/* ─── REPORTS VIEW ─── */
+function ReportsView({ onOpen, onNew }) {
+  const [selected, setSelected] = useState([]);
+  const [comparing, setComparing] = useState(false);
+
+  const toggleSelect = (run) => {
+    setSelected((prev) => prev.includes(run) ? prev.filter((r) => r !== run) : prev.length < 2 ? [...prev, run] : [prev[1], run]);
+  };
+
+  const compareRuns = REPORTS.filter((r) => selected.includes(r.run));
+
+  if (comparing && compareRuns.length === 2) {
+    return <ABCompareDetail a={compareRuns[0]} b={compareRuns[1]} onBack={() => setComparing(false)} />;
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.01em', marginBottom: 4 }}>Past reports</div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.36px' }}>{REPORTS.length} runs</div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {selected.length === 2 &&
+            <button onClick={() => setComparing(true)}
+            style={{ background: '#f7f7f7', color: '#1a1a1a', border: '1px solid #e8e8e8', borderRadius: 500, padding: '9px 20px', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', cursor: 'pointer', transition: 'border-color 200ms' }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#d4d4d4'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e8e8e8'}>
+                A/B 比較
+              </button>
+            }
+            {selected.length > 0 &&
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#707070', letterSpacing: '-0.36px' }}>{selected.length}/2 選択中</span>
+            }
+            <button onClick={onNew} style={{ background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 500, padding: '10px 24px', fontSize: 13, fontWeight: 500, letterSpacing: '-0.26px', cursor: 'pointer' }}>
+              ＋ 新しい検証
+            </button>
+          </div>
+        </div>
+        {/* Table header */}
+        <div style={{ display: 'grid', gridTemplateColumns: '28px 80px 1fr 100px 80px 80px 70px', gap: '0 14px', padding: '8px 16px', borderBottom: '1px solid #e8e8e8', marginBottom: 4 }}>
+          <div />
+          {['RUN', 'URL', 'DATE', 'SCORE', 'DELTA', 'PERSONA'].map((h) =>
+          <div key={h} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px' }}>{h}</div>
+          )}
+        </div>
+        {/* Rows */}
+        {REPORTS.map((r) => {
+          const isSel = selected.includes(r.run);
+          return (
+            <div key={r.run}
+            style={{ display: 'grid', gridTemplateColumns: '28px 80px 1fr 100px 80px 80px 70px', gap: '0 14px',
+              padding: '12px 16px', borderBottom: '1px solid #f7f7f7', cursor: 'pointer', borderRadius: 8,
+              background: isSel ? '#fafafa' : 'transparent', transition: 'background 200ms ease-out' }}
+            onMouseEnter={(e) => {if (!isSel) e.currentTarget.style.background = '#f7f7f7';}}
+            onMouseLeave={(e) => {if (!isSel) e.currentTarget.style.background = 'transparent';}}>
+              {/* Checkbox */}
+              <div onClick={() => toggleSelect(r.run)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isSel ? '#1a1a1a' : '#d4d4d4'}`, background: isSel ? '#1a1a1a' : '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 200ms ease-out' }}>
+                  {isSel && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3l3 3 4-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+              </div>
+              <div onClick={() => onOpen(r)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.36px', display: 'flex', alignItems: 'center' }}>{r.run}</div>
+              <div onClick={() => onOpen(r)} style={{ fontSize: 13, color: '#1a1a1a', letterSpacing: '-0.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>{r.url}</div>
+              <div onClick={() => onOpen(r)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', letterSpacing: '-0.36px', display: 'flex', alignItems: 'center' }}>{r.date}</div>
+              <div onClick={() => onOpen(r)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 13, fontWeight: 500, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center',
+                color: r.score >= 60 ? '#ff4d2c' : r.score >= 45 ? '#707070' : '#3fb069' }}>{r.score}</div>
+              <div onClick={() => onOpen(r)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center',
+                color: r.delta > 0 ? '#ff4d2c' : '#3fb069' }}>{r.delta > 0 ? '+' : ''}{r.delta}</div>
+              <div onClick={() => onOpen(r)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', letterSpacing: '-0.36px', display: 'flex', alignItems: 'center' }}>{r.personas}体</div>
+            </div>);
+
+        })}
+        {selected.length > 0 && selected.length < 2 &&
+        <div style={{ marginTop: 12, fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', textAlign: 'center' }}>
+            もう 1 件選択すると A/B 比較できます
+          </div>
+        }
+      </div>
+    </div>);
+}
+
+/* ─── LEFT PANEL ─── */
+function LeftPanel({ phase, url, setUrl, onNew, config, onReports }) {
+  const sl = { idle: 'IDLE', active: 'LIVE', stuck: 'STUCK', done: 'DONE' };
+  const tm = { active: 'live', stuck: 'stuck', done: 'done', idle: 'default' };
+  const isSetup = phase === 'setup';
+  return (
+    <div style={{ width: 288, borderRight: '1px solid #e8e8e8', display: 'flex', flexDirection: 'column', height: '100%', flexShrink: 0 }}>
+      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="19" stroke="#1a1a1a" strokeWidth="1.5" />
+          <circle cx="20" cy="20" r="8" fill="#ff4d2c" />
+          <circle cx="12" cy="12" r="3" fill="#1a1a1a" opacity=".25" />
+          <circle cx="28" cy="12" r="3" fill="#1a1a1a" opacity=".25" />
+          <circle cx="12" cy="28" r="3" fill="#1a1a1a" opacity=".18" />
+          <circle cx="28" cy="28" r="3" fill="#1a1a1a" opacity=".18" />
+        </svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>GhostUsers</span>
+          {phase === 'dynamic' && null}
+        </div>
+        <button onClick={onReports} title="Past reports"
+        style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #e8e8e8', background: phase === 'reports' ? '#1a1a1a' : '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 200ms ease-out', flexShrink: 0 }}
+        onMouseEnter={(e) => {if (phase !== 'reports') {e.currentTarget.style.borderColor = '#d4d4d4';}}}
+        onMouseLeave={(e) => {if (phase !== 'reports') {e.currentTarget.style.borderColor = '#e8e8e8';}}}>
+          
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1.5" y="1" width="9" height="12" rx="1.5" stroke={phase === 'reports' ? '#fff' : '#707070'} strokeWidth="1.2" />
+            <line x1="4" y1="4.5" x2="9" y2="4.5" stroke={phase === 'reports' ? '#fff' : '#707070'} strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="4" y1="7" x2="9" y2="7" stroke={phase === 'reports' ? '#fff' : '#707070'} strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="4" y1="9.5" x2="7" y2="9.5" stroke={phase === 'reports' ? '#fff' : '#707070'} strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      {/* Run meta — only in dynamic/static */}
+      {(phase === 'dynamic' || phase === 'static') &&
+      <div style={{ padding: '10px 22px', borderBottom: '1px solid #e8e8e8', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Badge label="RUN #249" />
+          {phase === 'dynamic' && <><Badge label="00:14:32" tone="emphasis" /><Badge label="LIVE" tone="live" /></>}
+          {phase === 'static' && <><Badge label="00:14:32" tone="emphasis" /><button onClick={onNew} title="リプレイ" style={{width:26,height:26,borderRadius:6,border:'1px solid #e8e8e8',background:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'border-color 200ms',flexShrink:0,padding:0}} onMouseEnter={e=>e.currentTarget.style.borderColor='#d4d4d4'} onMouseLeave={e=>e.currentTarget.style.borderColor='#e8e8e8'}><svg width="10" height="11" viewBox="0 0 10 11" fill="none"><path d="M2 1.5l7 4-7 4V1.5z" fill="#1a1a1a"/></svg></button></>}
+        </div>
+      }
+      {/* Setup summary in left panel */}
+      {isSetup &&
+      <div style={{ padding: '12px 22px', borderBottom: '1px solid #e8e8e8' }}>
+          <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 8 }}>SETUP PREVIEW</div>
+          {config.targetType === 'image' ?
+        <div style={{ fontSize: 11, color: '#707070', marginBottom: 4 }}>画像 {(config.uploadedImages || []).length}枚</div> :
+        url && <div style={{ fontSize: 11, color: '#707070', marginBottom: 4, wordBreak: 'break-all' }}>{url}</div>
+        }
+          {config.device && <Badge label={config.device.toUpperCase()} />}
+          {config.personaCount > 0 && <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', marginLeft: 8 }}>{config.personaCount}体</span>}
+        </div>
+      }
+      {/* Persona list */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {phase === 'idle' &&
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: '32px 22px' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1px dashed #d4d4d4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#a8a8a8" strokeWidth="1.2" /><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="#a8a8a8" strokeWidth="1.2" strokeLinecap="round" /></svg>
+            </div>
+            <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', textAlign: 'center', lineHeight: 1.8 }}>設定後に表示されます</div>
+          </div>
+        }
+        {phase === 'setup' && (
+        config.personasGenerated ?
+        <div>
+              <div style={{ padding: '12px 22px 6px', fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px' }}>PERSONA PREVIEW</div>
+              {PERSONAS.slice(0, config.personaCount || 8).map((p) =>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 22px', borderBottom: '1px solid #f7f7f7' }}>
+                  <Av initial={p.initial} state="idle" size={28} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{p.id} {p.name}</div>
+                    <div style={{ fontSize: 10, color: '#a8a8a8', marginTop: 1 }}>{p.age}歳 · {p.role}</div>
+                  </div>
+                </div>
+          )}
+            </div> :
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, padding: '32px 22px' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1px dashed #d4d4d4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#a8a8a8" strokeWidth="1.2" /><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="#a8a8a8" strokeWidth="1.2" strokeLinecap="round" /></svg>
+              </div>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', textAlign: 'center', lineHeight: 1.8 }}>Step 02 でペルソナを生成してください</div>
+            </div>)
+
+        }
+        {(phase === 'dynamic' || phase === 'static') &&
+        <div style={{ padding: '12px 22px 6px', fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px' }}>PERSONA LIST</div>
+        }
+        {(phase === 'dynamic' || phase === 'static') && PERSONAS.slice(0, 8).map((p, i) => {
+          const st = phase === 'dynamic' ? DYN_STATES[i] : phase === 'static' ? DYN_STATES[i] === 'stuck' ? 'stuck' : 'done' : 'idle';
+          return (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 22px',
+              borderBottom: '1px solid #f7f7f7', background: st === 'stuck' ? '#fff5f2' : 'transparent', transition: 'background 200ms' }}>
+              <Av initial={p.initial} state={st} size={28} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{p.id} {p.name}</div>
+                <div style={{ fontSize: 10, color: '#a8a8a8', marginTop: 1 }}>{p.age}歳 · {p.role}</div>
+              </div>
+              {!isSetup && <Badge label={sl[st] || 'IDLE'} tone={tm[st] || 'default'} />}
+            </div>);
+
+        })}
+      </div>
+      {/* New test button — idle/static only */}
+      {(phase === 'idle' || phase === 'static') &&
+      <div style={{ padding: '16px 22px', borderTop: '1px solid #e8e8e8' }}>
+          <button onClick={onNew} style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none',
+          borderRadius: 500, padding: '10px', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', cursor: 'pointer' }}>
+            ＋ 新しい検証を開始
+          </button>
+        </div>
+      }
+    </div>);
+
+}
+
+/* ─── SETUP WIZARD ─── */
+function StepIndicator({ step }) {
+  const steps = [{ n: '01', l: 'ターゲット' }, { n: '02', l: 'ペルソナ' }, { n: '03', l: 'タスク & 確認' }];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 36 }}>
+      {steps.map((s, i) =>
+      <React.Fragment key={s.n}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, letterSpacing: '-0.36px',
+            background: step > i + 1 ? '#3fb069' : step === i + 1 ? '#1a1a1a' : '#f7f7f7',
+            color: step >= i + 1 ? '#fff' : '#a8a8a8', border: step <= i ? '1px solid #e8e8e8' : 'none',
+            transition: 'all 200ms ease-out' }}>
+              {step > i + 1 ? '✓' : s.n}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: step === i + 1 ? 500 : 400, color: step === i + 1 ? '#1a1a1a' : '#a8a8a8', letterSpacing: '-0.005em', transition: 'color 200ms' }}>{s.l}</span>
+          </div>
+          {i < 2 && <div style={{ flex: 1, height: 1, background: step > i + 1 ? '#3fb069' : '#e8e8e8', margin: '0 12px', transition: 'background 400ms' }} />}
+        </React.Fragment>
+      )}
+    </div>);
+
+}
+
+function Step1({ config, onChange }) {
+  const devices = [{ k: 'mobile', l: 'モバイル' }, { k: 'tablet', l: 'タブレット' }, { k: 'desktop', l: 'デスクトップ' }];
+  const purposes = [{ k: 'purchase', l: '購入フロー' }, { k: 'onboarding', l: 'オンボーディング' }, { k: 'content', l: 'コンテンツ閲覧' }, { k: 'form', l: 'フォーム入力' }, { k: 'ab', l: 'A/B テスト' }, { k: 'custom', l: 'カスタム' }];
+  const targetType = config.targetType || 'url';
+  const uploadedImages = config.uploadedImages || [];
+  const isAB = config.purpose === 'ab';
+
+  const handleFiles = (files) => {
+    const existing = config.uploadedImages || [];
+    const maxSlots = 10;
+    const newImgs = Array.from(files).slice(0, maxSlots - existing.length).map((f) => ({
+      name: f.name,
+      url: URL.createObjectURL(f)
+    }));
+    onChange({ uploadedImages: [...existing, ...newImgs].slice(0, maxSlots) });
+  };
+
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div>
+      {/* Target type toggle */}
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 10 }}>検証対象</label>
+        <div style={{ display: 'flex', gap: 6, background: '#f7f7f7', borderRadius: 500, padding: 4, display: 'inline-flex', marginBottom: 14 }}>
+          <button onClick={() => onChange({ targetType: 'url', uploadedImages: [] })} style={pill(targetType === 'url')}>URL</button>
+          <button onClick={() => onChange({ targetType: 'image' })} style={pill(targetType === 'image')}>画像アップロード</button>
+        </div>
+
+        {/* URL mode */}
+        {targetType === 'url' &&
+        <div>
+            <input value={config.url} onChange={(e) => onChange({ url: e.target.value })} placeholder="https://your-app.com"
+          style={{ width: '100%', border: '1px solid #e8e8e8', borderRadius: 8, padding: '12px 16px', fontSize: 14,
+            fontFamily: 'Inter,"Noto Sans JP",sans-serif', color: '#1a1a1a', transition: 'border-color 200ms', background: '#fff' }}
+          onFocus={(e) => e.target.style.borderColor = '#1a1a1a'} onBlur={(e) => e.target.style.borderColor = '#e8e8e8'} />
+            <div style={{ fontSize: 11, color: '#a8a8a8', marginTop: 6, letterSpacing: '-0.005em' }}>本番環境・Figma プロトタイプ・ステージング URL に対応しています。</div>
+          </div>
+        }
+
+        {/* Image upload mode */}
+        {targetType === 'image' &&
+        <div>
+            <div style={{ fontSize: 11, color: '#707070', marginBottom: 10, letterSpacing: '-0.005em' }}>
+              モックアップ・バナー画像をアップロードして検証できます。複数画面の遷移も想定して複数枚アップできます。
+              {isAB && <span style={{ color: '#ff4d2c', marginLeft: 4 }}>A/B テストは Pattern A / B の 2 枚を目安に。</span>}
+            </div>
+            {/* Drop zone */}
+            <div
+            onDragOver={(e) => {e.preventDefault();setDragging(true);}}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {e.preventDefault();setDragging(false);handleFiles(e.dataTransfer.files);}}
+            onClick={() => document.getElementById('img-upload-input').click()}
+            style={{ border: `1.5px dashed ${dragging ? '#1a1a1a' : '#d4d4d4'}`, borderRadius: 10, padding: '20px 16px',
+              textAlign: 'center', cursor: 'pointer', background: dragging ? '#f7f7f7' : '#fafafa',
+              transition: 'all 200ms ease-out', marginBottom: 10 }}>
+              <input id="img-upload-input" type="file" accept="image/*" multiple style={{ display: 'none' }}
+            onChange={(e) => handleFiles(e.target.files)} />
+              <div style={{ fontSize: 24, marginBottom: 8, color: '#d4d4d4' }}>↑</div>
+              <div style={{ fontSize: 13, color: '#707070', letterSpacing: '-0.005em' }}>
+                クリックまたはドラッグ＆ドロップで画像を追加
+              </div>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginTop: 4 }}>
+                PNG / JPG / WebP
+              </div>
+            </div>
+            {/* Preview */}
+            {uploadedImages.length > 0 &&
+          <div style={{ display: 'flex', gap: 10 }}>
+                {uploadedImages.map((img, i) =>
+            <div key={i} style={{ position: 'relative', flex: 1 }}>
+                    <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 4 }}>
+                      {isAB ? i === 0 ? 'PATTERN A' : 'PATTERN B' : 'IMAGE'}
+                    </div>
+                    <div style={{ position: 'relative', border: '1px solid #e8e8e8', borderRadius: 8, overflow: 'hidden', background: '#f7f7f7' }}>
+                      <img src={img.url} alt={img.name} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }} />
+                      <button onClick={(e) => {e.stopPropagation();onChange({ uploadedImages: uploadedImages.filter((_, j) => j !== i) });}}
+                style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(26,26,26,0.6)',
+                  color: '#fff', border: 'none', cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                    </div>
+                    <div style={{ fontSize: 10, color: '#a8a8a8', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{img.name}</div>
+                  </div>
+            )}
+                {isAB && uploadedImages.length < 2 &&
+            <div style={{ flex: 1, border: '1.5px dashed #e8e8e8', borderRadius: 8, height: 108, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#a8a8a8', fontSize: 22 }}
+            onClick={() => document.getElementById('img-upload-input').click()}>+</div>
+            }
+              </div>
+          }
+          </div>
+        }
+      </div>
+
+      <div style={{ marginBottom: 28 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 10 }}>テストデバイス</label>
+        <div style={{ display: 'flex', gap: 6, background: '#f7f7f7', borderRadius: 500, padding: 4, display: 'inline-flex' }}>
+          {devices.map((d) =>
+          <button key={d.k} onClick={() => onChange({ device: d.k })} style={pill(config.device === d.k)}>{d.l}</button>
+          )}
+        </div>
+      </div>
+      <div>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 10 }}>検証目的</label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {purposes.map((p) =>
+          <button key={p.k} onClick={() => onChange({ purpose: p.k })} style={chip(config.purpose === p.k)}>{p.l}</button>
+          )}
+        </div>
+      </div>
+    </div>);
+
+}
+
+function Step2({ config, onChange, aiPhase, setAiPhase, prompt, setPrompt }) {
+  const [updating, setUpdating] = useState(false);
+  const [customInterest, setCustomInterest] = useState('');
+  const [customPriority, setCustomPriority] = useState('');
+  const counts = [8, 12, 16, 24];
+  const ages = ['20代', '30代', '40代', '50代', '60代以上'];
+  const literacies = [{ k: 'low', l: '低' }, { k: 'medium', l: '中' }, { k: 'high', l: '高' }];
+  const examples = ['30〜50代が中心の EC サイト購入フロー', '20代ターゲットのサブスク オンボーディング', 'シニア向け医療情報サービスの操作性'];
+  const toggleAge = (a) => {const cur = config.ageGroups || [];onChange({ ageGroups: cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a] });};
+
+  const generate = () => {
+    if (!prompt.trim()) return;
+    setAiPhase('generating');
+    setTimeout(() => {
+      const isYoung = /(20代|若|学生|Z世代)/.test(prompt);
+      const isSenior = /(シニア|60|高齢|年配)/.test(prompt);
+      const suggested = {
+        personaCount: isSenior ? 8 : isYoung ? 12 : 16,
+        ageGroups: isYoung ? ['20代', '30代'] : isSenior ? ['50代', '60代以上'] : ['30代', '40代', '50代'],
+        literacy: isYoung ? 'high' : isSenior ? 'low' : 'medium'
+      };
+      onChange({ ...suggested, personasGenerated: true });
+      setAiPhase('custom');
+    }, 1800);
+  };
+
+  const litLabel = { low: '低', medium: '中', high: '高' };
+  const genderLabels = { 'male-heavy': '男性多め', balanced: 'バランス', 'female-heavy': '女性多め' };
+  const INTERESTS_OPTIONS = ['EC・ショッピング', 'テクノロジー', '旅行・観光', 'グルメ', 'ファッション', '健康・美容', '金融・投資', 'エンタメ'];
+  const PRIORITY_OPTIONS = ['コスパ', 'デザイン', '機能性', 'ブランド', '口コミ', 'スピード', '安心感', '利便性'];
+  const toggleTag = (key, val) => {const cur = config[key] || [];onChange({ [key]: cur.includes(val) ? cur.filter((x) => x !== val) : [...cur, val] });};
+
+  /* ── INPUT PHASE ── */
+  if (aiPhase === 'input') return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 8 }}>
+          ターゲットユーザーや検証目的を教えてください
+        </label>
+        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={3}
+        placeholder="例: 30〜50代の一般ユーザーが中心の EC サイトで、購入フローの使いやすさを検証したい。"
+        style={{ width: '100%', border: '1px solid #e8e8e8', borderRadius: 8, padding: '12px 16px', fontSize: 13, resize: 'none',
+          fontFamily: 'Inter,"Noto Sans JP",sans-serif', color: '#1a1a1a', transition: 'border-color 200ms', background: '#fff', lineHeight: 1.6 }}
+        onFocus={(e) => e.target.style.borderColor = '#1a1a1a'} onBlur={(e) => e.target.style.borderColor = '#e8e8e8'} />
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 8 }}>EXAMPLE</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {examples.map((ex, i) =>
+          <button key={i} onClick={() => setPrompt(ex)}
+          style={{ textAlign: 'left', background: '#f7f7f7', border: '1px solid #e8e8e8', borderRadius: 8, padding: '9px 14px', fontSize: 12,
+            color: '#707070', cursor: 'pointer', fontFamily: 'Inter,"Noto Sans JP",sans-serif', letterSpacing: '-0.005em', transition: 'border-color 200ms' }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = '#d4d4d4'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e8e8e8'}>
+              {ex}
+            </button>
+          )}
+        </div>
+      </div>
+      <button onClick={generate}
+      style={{ background: prompt.trim() ? '#1a1a1a' : '#e8e8e8', color: prompt.trim() ? '#fff' : '#a8a8a8', border: 'none',
+        borderRadius: 500, padding: '11px 28px', fontSize: 13, fontWeight: 500, letterSpacing: '-0.26px',
+        cursor: prompt.trim() ? 'pointer' : 'not-allowed', transition: 'all 200ms ease-out' }}>
+        ユーザーを生成
+      </button>
+    </div>);
+
+
+  /* ── GENERATING PHASE ── */
+  if (aiPhase === 'generating') return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: 16 }}>
+      <div style={{ display: 'flex', gap: 6 }}>
+        {[0, 1, 2].map((i) =>
+        <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#1a1a1a',
+          animation: `ghost-live-dot 1200ms ease-in-out ${i * 200}ms infinite` }} />
+        )}
+      </div>
+      <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, color: '#707070', letterSpacing: '-0.36px' }}>ペルソナを設計中...</div>
+      <div style={{ fontSize: 12, color: '#a8a8a8', maxWidth: 280, textAlign: 'center', lineHeight: 1.6, letterSpacing: '-0.005em' }}>
+        「{prompt}」をもとに最適なペルソナ構成を提案しています。
+      </div>
+    </div>);
+
+
+  /* ── SUGGESTED / CUSTOM PHASE ── */
+  return (
+    <div>
+      {/* AI suggestion card */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '18px 20px', marginBottom: 20, background: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#707070', letterSpacing: '-0.36px' }}>AI 提案</span>
+          <div style={{ flex: 1, height: 1, background: '#e8e8e8' }} />
+          <button onClick={() => {setAiPhase('input');setPrompt('');}}
+          style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '-0.3px' }}>
+            やり直す
+          </button>
+        </div>
+        {[{
+          label: 'ペルソナ数', value: `${config.personaCount}体`,
+          control: <div style={{ display: 'flex', gap: 6 }}>{counts.map((c) => <button key={c} onClick={() => onChange({ personaCount: c })} style={{ ...chip(config.personaCount === c), fontSize: 11, padding: '3px 10px' }}><span style={{ fontFamily: '"IBM Plex Mono",monospace' }}>{c}</span>体</button>)}</div> },
+        { label: '年齢層', value: (config.ageGroups || []).join(' ・ '),
+          control: <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{ages.map((a) => <button key={a} onClick={() => toggleAge(a)} style={{ ...chip((config.ageGroups || []).includes(a)), fontSize: 11, padding: '3px 10px' }}>{a}</button>)}</div> },
+        { label: '性別', value: genderLabels[config.gender || 'balanced'],
+          control: <div style={{ display: 'flex', gap: 4, background: '#f7f7f7', borderRadius: 500, padding: 3, display: 'inline-flex' }}>
+            {['male-heavy', 'balanced', 'female-heavy'].map((g) => <button key={g} onClick={() => onChange({ gender: g })} style={{ ...pill((config.gender || 'balanced') === g), fontSize: 11, padding: '4px 10px' }}>{genderLabels[g]}</button>)}
+          </div> },
+        { label: 'IT リテラシー', value: litLabel[config.literacy] || '中',
+          control: <div style={{ display: 'flex', gap: 4, background: '#f7f7f7', borderRadius: 500, padding: 3, display: 'inline-flex' }}>{literacies.map((l) => <button key={l.k} onClick={() => onChange({ literacy: l.k })} style={{ ...pill(config.literacy === l.k), fontSize: 11, padding: '4px 12px' }}>{l.l}</button>)}</div> },
+        { label: '興味関心', value: (config.interests || []).slice(0, 3).join('・') || '未設定',
+          control: <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+            {INTERESTS_OPTIONS.map((t) => {const sel = (config.interests || []).includes(t);return <button key={t} onClick={() => toggleTag('interests', t)} style={{ ...chip(sel), fontSize: 10, padding: '3px 9px', display: 'flex', alignItems: 'center', gap: 3 }}>{sel && <span style={{ opacity: .6, fontSize: 9 }}>×</span>}{t}</button>;})
+            }
+            {(config.interests||[]).filter(t=>!INTERESTS_OPTIONS.includes(t)).map(t=>(
+              <button key={t} onClick={()=>toggleTag('interests',t)} style={{...chip(true),fontSize:10,padding:'3px 9px',display:'flex',alignItems:'center',gap:3}}><span style={{opacity:.6,fontSize:9}}>×</span>{t}</button>
+            ))}
+            <div style={{display:'flex',alignItems:'center',gap:4}}>
+              <input value={customInterest} onChange={e=>setCustomInterest(e.target.value)}
+                placeholder='+追加' onKeyDown={e=>{if(e.key==='Enter'&&customInterest.trim()){toggleTag('interests',customInterest.trim());setCustomInterest('');}}}
+                style={{border:'1px dashed #d4d4d4',borderRadius:4,padding:'3px 8px',fontSize:10,width:80,outline:'none',fontFamily:'Inter,「Noto Sans JP」,sans-serif',color:'#1a1a1a',background:'#fff'}}/>
+              {customInterest.trim()&&<button onClick={()=>{toggleTag('interests',customInterest.trim());setCustomInterest('');}} style={{...chip(false),fontSize:10,padding:'3px 8px'}}>+</button>}
+            </div>
+          </div> },
+        { label: '重視軸', value: (config.priorities || []).slice(0, 3).join('・') || '未設定',
+          control: <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+            {PRIORITY_OPTIONS.map((t) => {const sel = (config.priorities || []).includes(t);return <button key={t} onClick={() => toggleTag('priorities', t)} style={{ ...chip(sel), fontSize: 10, padding: '3px 9px', display: 'flex', alignItems: 'center', gap: 3 }}>{sel && <span style={{ opacity: .6, fontSize: 9 }}>×</span>}{t}</button>;})
+            }
+            {(config.priorities||[]).filter(t=>!PRIORITY_OPTIONS.includes(t)).map(t=>(
+              <button key={t} onClick={()=>toggleTag('priorities',t)} style={{...chip(true),fontSize:10,padding:'3px 9px',display:'flex',alignItems:'center',gap:3}}><span style={{opacity:.6,fontSize:9}}>×</span>{t}</button>
+            ))}
+            <div style={{display:'flex',alignItems:'center',gap:4}}>
+              <input value={customPriority} onChange={e=>setCustomPriority(e.target.value)}
+                placeholder='+追加' onKeyDown={e=>{if(e.key==='Enter'&&customPriority.trim()){toggleTag('priorities',customPriority.trim());setCustomPriority('');}}}
+                style={{border:'1px dashed #d4d4d4',borderRadius:4,padding:'3px 8px',fontSize:10,width:80,outline:'none',fontFamily:'Inter,「Noto Sans JP」,sans-serif',color:'#1a1a1a',background:'#fff'}}/>
+              {customPriority.trim()&&<button onClick={()=>{toggleTag('priorities',customPriority.trim());setCustomPriority('');}} style={{...chip(false),fontSize:10,padding:'3px 8px'}}>+</button>}
+            </div>
+          </div> }].
+        map((row) =>
+        <div key={row.label} style={{ marginBottom: aiPhase === 'custom' ? 18 : 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: aiPhase === 'custom' ? 8 : 0 }}>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', width: 90, flexShrink: 0 }}>{row.label}</span>
+              {aiPhase !== 'custom' && <span style={{ fontSize: 13, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{row.value}</span>}
+            </div>
+            {aiPhase === 'custom' && row.control}
+          </div>
+        )}
+
+        {aiPhase === 'custom' &&
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 6 }}>テキストで自由に指示を追加</div>
+              <textarea
+              placeholder="例: 20代女性を多めにして、ファッションへの関心が高いペルソナを追加してください。"
+              rows={3}
+              style={{ width: '100%', border: '1px solid #e8e8e8', borderRadius: 8, padding: '10px 14px', fontSize: 12,
+                fontFamily: 'Inter,"Noto Sans JP",sans-serif', color: '#1a1a1a', resize: 'none',
+                transition: 'border-color 200ms', background: '#fff', lineHeight: 1.6, letterSpacing: '-0.005em' }}
+              onFocus={(e) => e.target.style.borderColor = '#1a1a1a'}
+              onBlur={(e) => e.target.style.borderColor = '#e8e8e8'} />
+            
+            </div>
+            <button
+            onClick={() => {setUpdating(true);setTimeout(() => {onChange({ personasGenerated: true });setUpdating(false);}, 1600);}}
+            disabled={updating}
+            style={{ background: updating ? '#707070' : '#1a1a1a', color: '#fff', border: 'none', borderRadius: 500,
+              padding: '10px 24px', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', cursor: updating ? 'wait' : 'pointer',
+              alignSelf: 'flex-start', transition: 'all 200ms', display: 'flex', alignItems: 'center', gap: 8 }}
+            onMouseEnter={(e) => {if (!updating) e.currentTarget.style.opacity = '.8';}}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}>
+              {updating && <span style={{ display: 'flex', gap: 3 }}>{[0, 1, 2].map((i) => <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', animation: `ghost-live-dot 1200ms ease-in-out ${i * 200}ms infinite`, display: 'inline-block' }} />)}</span>}
+              {updating ? '生成中…' : 'ペルソナを更新'}
+            </button>
+          </div>
+        }
+      </div>
+      {/* Persona preview removed — shown in sidebar */}
+    </div>);
+
+}
+
+function Step3({ config, onChange, onRun }) {
+  const purposeLabels = { purchase: '購入フロー', onboarding: 'オンボーディング', content: 'コンテンツ閲覧', form: 'フォーム入力', ab: 'A/B テスト', custom: 'カスタム' };
+  const targetLabel = config.targetType === 'image' ?
+  `画像 ${(config.uploadedImages || []).length}枚` :
+  config.url || '未入力';
+  return (
+    <div>
+      {/* Journey map preview */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 10 }}>
+          {config.purpose === 'ab' ? 'A/B テスト — 比較パターン' : 'JOURNEY — 検証対象の画面遷移'}
+        </div>
+        {config.purpose === 'ab' ? (
+        /* A/B test: Pattern A vs B */
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {['A', 'B'].map((pat, i) =>
+          <React.Fragment key={pat}>
+                <div style={{ flex: 1, border: '1px solid #e8e8e8', borderRadius: 8, padding: '10px 14px', background: '#fff' }}>
+                  <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 5 }}>PATTERN {pat}</div>
+                  {(config.uploadedImages || [])[i] ?
+              <img src={(config.uploadedImages || [])[i].url} alt={`Pattern ${pat}`}
+              style={{ width: '100%', height: 60, objectFit: 'cover', borderRadius: 4, display: 'block' }} /> :
+
+              <div style={{ height: 60, background: '#f7f7f7', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.005em' }}>未アップロード</div>
+              }
+                </div>
+                {i === 0 && <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, fontWeight: 500, color: '#a8a8a8', flexShrink: 0 }}>VS</div>}
+              </React.Fragment>
+          )}
+          </div>) : (
+
+        /* Regular flow: journey nodes — all uniform styling */
+        <div style={{ overflowX: 'auto' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 0, padding: '4px 0' }}>
+              {JM_NODES.map((node, i) =>
+            <React.Fragment key={node.id}>
+                  <div style={{ padding: '5px 10px', border: '1px solid #e8e8e8', borderRadius: 6,
+                background: '#fff', fontSize: 10, fontWeight: 500, color: '#1a1a1a',
+                letterSpacing: '-0.005em', whiteSpace: 'nowrap' }}>
+                    {node.label}
+                  </div>
+                  {i < JM_NODES.length - 1 &&
+              <div style={{ display: 'flex', alignItems: 'center', width: 24, flexShrink: 0 }}>
+                      <div style={{ flex: 1, height: 1, background: '#d4d4d4' }} />
+                      <svg width="5" height="8" viewBox="0 0 5 8" fill="none">
+                        <path d="M1 1l3 3-3 3" stroke="#d4d4d4" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+              }
+                </React.Fragment>
+            )}
+            </div>
+          </div>)
+        }
+      </div>
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 8 }}>テストタスク <span style={{ fontSize: 11, color: '#a8a8a8', fontWeight: 400 }}>（ペルソナへの指示）</span></label>
+        <textarea value={config.taskDesc} onChange={(e) => onChange({ taskDesc: e.target.value })}
+        placeholder="例: 商品を検索して購入フローを最後まで試してください。"
+        rows={3}
+        style={{ width: '100%', border: '1px solid #e8e8e8', borderRadius: 8, padding: '12px 16px', fontSize: 13, resize: 'none',
+          fontFamily: 'Inter,"Noto Sans JP",sans-serif', color: '#1a1a1a', transition: 'border-color 200ms', background: '#fff', lineHeight: 1.6 }}
+        onFocus={(e) => e.target.style.borderColor = '#1a1a1a'} onBlur={(e) => e.target.style.borderColor = '#e8e8e8'} />
+      </div>
+      {/* KPI */}
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.005em', display: 'block', marginBottom: 4 }}>KPI 目標</label>
+        <div style={{ fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.005em', marginBottom: 12 }}>検証結果の達成・未達の判定に使います。</div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '-0.005em', marginBottom: 6 }}>タスク完了率の目標</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="number" min="0" max="100" value={config.kpiCompletion||80}
+                onChange={e=>onChange({kpiCompletion:Number(e.target.value)})}
+                style={{ width: 70, border: '1px solid #e8e8e8', borderRadius: 6, padding: '8px 10px', fontSize: 14,
+                  fontFamily: '"IBM Plex Mono",monospace', color: '#1a1a1a', outline: 'none', transition: 'border-color 200ms',
+                  fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}
+                onFocus={e=>e.target.style.borderColor='#1a1a1a'} onBlur={e=>e.target.style.borderColor='#e8e8e8'} />
+              <span style={{ fontSize: 14, color: '#707070', fontWeight: 500 }}>%</span>
+              <span style={{ fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.005em' }}>以上</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Summary */}
+      <div style={{ background: '#f7f7f7', border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 4 }}>検証サマリー</div>
+        {[
+        { l: '検証対象', v: targetLabel },
+        { l: 'デバイス', v: (config.device || 'mobile') === 'mobile' ? 'モバイル' : config.device === 'tablet' ? 'タブレット' : 'デスクトップ' },
+        { l: '検証目的', v: purposeLabels[config.purpose] || '未設定' },
+        { l: 'ペルソナ数', v: `${config.personaCount || 8}体` },
+        { l: '年齢層', v: (config.ageGroups || []).join(' / ') || '未設定' },
+        { l: 'ITリテラシー', v: { low: '低', medium: '中', high: '高' }[config.literacy] || '中' },
+        { l: '性別', v: { 'male-heavy': '男性多め', balanced: 'バランス', 'female-heavy': '女性多め' }[config.gender || 'balanced'] },
+        { l: '興味関心', v: (config.interests || []).join(' ・ ') || '未設定' },
+        { l: '重視軸', v: (config.priorities || []).join(' ・ ') || '未設定' },
+        { l: 'KPI 完了率', v: `目標 ${config.kpiCompletion||80}% 以上` },
+        { l: 'KPI スコア', v: `${config.kpiScore||40} 以下` }].
+        map((row) =>
+        <div key={row.l} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', width: 72, flexShrink: 0 }}>{row.l}</span>
+            <span style={{ fontSize: 13, color: '#1a1a1a', letterSpacing: '-0.005em', wordBreak: 'break-all' }}>{row.v}</span>
+          </div>
+        )}
+      </div>
+      <button onClick={onRun} style={{ width: '100%', background: '#1a1a1a', color: '#fff', border: 'none',
+        borderRadius: 500, padding: '14px', fontSize: 14, fontWeight: 500, letterSpacing: '-0.26px', cursor: 'pointer',
+        transition: 'opacity 200ms ease-out' }}
+      onMouseEnter={(e) => e.currentTarget.style.opacity = '.85'} onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}>
+        検証を開始
+      </button>
+    </div>);
+
+}
+
+function SetupPanel({ step, config, onChange, onNext, onBack, onRun }) {
+  const [aiPhase, setAiPhase] = useState('input');
+  const [prompt, setPrompt] = useState('');
+  const canNext1 = config.device && config.purpose && (
+  config.targetType === 'image' ?
+  (config.uploadedImages || []).length > 0 :
+  config.url && config.url.startsWith('http'));
+  const canNext2 = config.personaCount > 0 && (config.ageGroups || []).length > 0;
+  return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      {/* Wizard center */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '40px 56px' }}>
+        <StepIndicator step={step} />
+        {step === 1 && <Step1 config={config} onChange={onChange} />}
+        {step === 2 && <Step2 config={config} onChange={onChange} aiPhase={aiPhase} setAiPhase={setAiPhase} prompt={prompt} setPrompt={setPrompt} />}
+        {step === 3 && <Step3 config={config} onChange={onChange} onRun={onRun} />}
+        {step < 3 &&
+        <div style={{ display: 'flex', gap: 10, marginTop: 32 }}>
+            {step > 1 && <button onClick={onBack} style={{ ...chip(false), padding: '10px 20px', fontSize: 13 }}>← 戻る</button>}
+            <button onClick={() => {if (step === 1 ? canNext1 : canNext2) onNext();}}
+          style={{ background: (step === 1 ? canNext1 : canNext2) ? '#1a1a1a' : '#e8e8e8', color: (step === 1 ? canNext1 : canNext2) ? '#fff' : '#a8a8a8',
+            border: 'none', borderRadius: 500, padding: '10px 28px', fontSize: 13, fontWeight: 500, letterSpacing: '-0.26px',
+            cursor: (step === 1 ? canNext1 : canNext2) ? 'pointer' : 'not-allowed', transition: 'all 200ms ease-out' }}>
+              次へ →
+            </button>
+          </div>
+        }
+        {step === 3 && <button onClick={onBack} style={{ ...chip(false), padding: '8px 16px', fontSize: 12, marginTop: 12 }}>← ペルソナ設定に戻る</button>}
+      </div>
+      {/* Right: help / preview */}
+      <div style={{ width: 300, borderLeft: '1px solid #e8e8e8', overflowY: 'auto', padding: '32px 24px', flexShrink: 0 }}>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 16 }}>GUIDE</div>
+        {step === 1 && <div style={{ fontSize: 12, color: '#707070', lineHeight: 1.7, letterSpacing: '-0.005em' }}>
+          <p style={{ marginBottom: 12 }}>本番環境の URL、Figma プロトタイプ、またはステージング環境を入力してください。</p>
+          <p style={{ marginBottom: 12 }}>デバイスを選択すると、そのデバイスに適した解像度でペルソナが操作を行います。</p>
+          <p>検証目的を設定すると、ペルソナの行動傾向が自動的に最適化されます。</p>
+        </div>}
+        {step === 2 && <div style={{ fontSize: 12, color: '#707070', lineHeight: 1.7, letterSpacing: '-0.005em' }}>
+          <p style={{ marginBottom: 12 }}>多様なペルソナ属性を設定することで、より広範なユーザー層の反応を検証できます。</p>
+          <p style={{ marginBottom: 12 }}>年齢層は複数選択可能です。ターゲットユーザーの属性に合わせて選択してください。</p>
+          <p>IT リテラシーが「低」のペルソナは、より慎重にナビゲーションを確認します。</p>
+        </div>}
+        {step === 3 && <div style={{ fontSize: 12, color: '#707070', lineHeight: 1.7, letterSpacing: '-0.005em' }}>
+          <p style={{ marginBottom: 12 }}>タスク指示はペルソナへの「依頼」として機能します。具体的な行動を記述してください。</p>
+          <p>検証開始後は Scan & Override ボタンでいつでも結果レポートに切り替えられます。</p>
+        </div>}
+      </div>
+    </div>);
+
+}
+
+/* ─── LIVE JOURNEY MAP ─── */
+const JM_NODES = [
+{ id: 'list', label: '商品一覧', stuck: false, callout: '1体が商品を閲覧中' },
+{ id: 'detail', label: '商品詳細', stuck: false, callout: '3体が商品詳細を確認中' },
+{ id: 'cart', label: 'カート', stuck: false },
+{ id: 'gift', label: 'ギフト設定', stuck: true, callout: '3体がラッピング設定を編集中' },
+{ id: 'payment', label: '支払い方法', stuck: true, callout: '1体が手続き中・2体が停滞中' },
+{ id: 'done', label: '完了', stuck: false, isDone: true, callout: '1体が購入を完了' }];
+
+const JM_PERSONAS = {
+  list: [{ initial: '鈴', state: 'active' }],
+  detail: [{ initial: '村', state: 'active' }, { initial: '山', state: 'active' }, { initial: '田', state: 'active' }],
+  cart: [],
+  gift: [{ initial: '中', state: 'stuck' }, { initial: '渡', state: 'stuck' }, { initial: '佐', state: 'active' }],
+  payment: [{ initial: '伊', state: 'active' }],
+  done: [{ initial: '田', state: 'done' }]
+};
+
+function JMThumb({ id, isDone }) {
+  if (isDone) return (
+    <svg width="80" height="54" viewBox="0 0 80 54" fill="none">
+      <circle cx="40" cy="27" r="11" stroke="#c8c8c8" strokeWidth="1.2" />
+      <path d="M34 27l5 5 9-10" stroke="#c8c8c8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>);
+
+  const W = 80,H = 54;
+  const thumbs = {
+    list:
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+        {[{ x: 4, y: 4 }, { x: 30, y: 4 }, { x: 56, y: 4 }, { x: 4, y: 28 }, { x: 30, y: 28 }, { x: 56, y: 28 }].map((p, i) =>
+      <rect key={i} x={p.x} y={p.y} width="21" height="19" rx="2" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+      )}
+      </svg>,
+
+    detail:
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+        <rect x="4" y="4" width="34" height="46" rx="2" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="42" y="4" width="34" height="9" rx="2" fill="#e8e8e8" />
+        <rect x="42" y="17" width="26" height="4" rx="2" fill="#f0f0f0" />
+        <rect x="42" y="24" width="20" height="4" rx="2" fill="#f0f0f0" />
+        <rect x="42" y="38" width="34" height="12" rx="6" fill="#e8e8e8" />
+      </svg>,
+
+    cart:
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+        {[4, 20, 36].map((y, i) => <React.Fragment key={i}>
+          <rect x="4" y={y} width="18" height="13" rx="2" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+          <rect x="26" y={y + 2} width="30" height="4" rx="2" fill="#e8e8e8" />
+          <rect x="26" y={y + 8} width="18" height="3" rx="1.5" fill="#f0f0f0" />
+        </React.Fragment>)}
+      </svg>,
+
+    gift:
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+        <rect x="4" y="4" width="72" height="7" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="4" y="15" width="72" height="7" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="4" y="26" width="32" height="7" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="4" y="38" width="14" height="14" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="22" y="41" width="38" height="4" rx="2" fill="#f0f0f0" />
+        <rect x="22" y="47" width="26" height="3" rx="1.5" fill="#f0f0f0" />
+      </svg>,
+
+    payment:
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+        <rect x="4" y="4" width="72" height="18" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="8" y="9" width="14" height="8" rx="1.5" fill="#e8e8e8" />
+        <circle cx="54" cy="13" r="4" stroke="#e8e8e8" strokeWidth="1" />
+        <circle cx="64" cy="13" r="4" stroke="#e8e8e8" strokeWidth="1" />
+        <rect x="4" y="28" width="72" height="7" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+        <rect x="4" y="39" width="72" height="7" rx="3" fill="#f0f0f0" stroke="#e8e8e8" strokeWidth="0.5" />
+      </svg>
+
+  };
+  return thumbs[id] || <svg width={W} height={H}><rect x="4" y="4" width="72" height="46" rx="3" fill="#f0f0f0" /></svg>;
+}
+
+const ANALYST_LOGS=[
+  {time:'00:03',text:'商品詳細ページの CTA 視認性に問題を検知。3体が同エリアで停滞中。改善優先度：高。'},
+  {time:'00:05',text:'ギフト設定 UI で連続停滞を検知。フォーム設計の複雑さが主因と推定。'},
+  {time:'00:08',text:'ポジティブ感情が 48% で安定推移。商品一覧・詳細の体験品質は概ね良好。'},
+  {time:'00:11',text:'支払いフローへの到達率が低下傾向。カート UI の改善が最優先課題。'},
+  {time:'00:14',text:'完了率は現在 37.5%。KPI 目標 80% 達成には導線の改善が必要。'},
+];
+
+function LiveJourneyMap({ config }) {
+  const [selected, setSelected] = useState(null);
+  const [visibleAnalyst, setVisibleAnalyst] = useState(ANALYST_LOGS.slice(0,1));
+  useEffect(()=>{
+    let idx=1;
+    const t=setInterval(()=>{
+      if(idx>=ANALYST_LOGS.length){clearInterval(t);return;}
+      setVisibleAnalyst(p=>[...p,ANALYST_LOGS[idx++]]);
+    },3200);
+    return()=>clearInterval(t);
+  },[]);
+  const taskName = config.taskDesc || '購入フローを最後まで完了してください';
+  const flat = Object.values(JM_PERSONAS).flat();
+  const activeC = flat.filter((p) => p.state === 'active').length;
+  const stuckC = flat.filter((p) => p.state === 'stuck').length;
+  const doneC = flat.filter((p) => p.state === 'done').length;
+
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '14px 16px', gap: 10 }}>
+      {/* Task header */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '13px 16px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 7, border: '1.5px solid #ff4d2c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', border: '1.5px solid #ff4d2c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#ff4d2c', animation: 'ghost-live-dot 2200ms ease-in-out infinite' }} />
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{taskName}</div>
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '-0.005em', marginTop: 1 }}>ペルソナがリアルタイムで操作中です。</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 0, borderTop: '1px solid #f7f7f7', paddingTop: 10 }}>
+          {[{ l: 'アクティブ', v: activeC, c: '#3fb069' }, { l: '停滞中', v: stuckC, c: '#ff4d2c' }, { l: '完了', v: doneC, c: '#1a1a1a' }].map((s, i) =>
+          <div key={s.l} style={{ flex: 1, textAlign: 'center', borderRight: i < 2 ? '1px solid #f7f7f7' : 'none' }}>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 18, fontWeight: 500, color: s.c, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{s.v}</div>
+              <div style={{ fontSize: 10, color: s.c, marginTop: 3, letterSpacing: '-0.005em' }}>{s.l}</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Journey map */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '14px 14px 8px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* Legend header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {<Dot />}
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em' }}>ライブジャーニーマップ</div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            {[{ c: '#3fb069', l: 'LIVE', filled: true }, { c: '#ff4d2c', l: 'STUCK', dashed: true }, { c: '#1a1a1a', l: 'DONE' }].map((leg) =>
+            <div key={leg.l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 11, height: 11, borderRadius: '50%', background: leg.filled ? leg.c : 'transparent',
+                border: `1.5px ${leg.dashed ? 'dashed' : 'solid'} ${leg.c}` }} />
+                <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#707070', letterSpacing: '-0.36px' }}>{leg.l}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable node area */}
+        <div style={{ overflowX: 'auto', flex: 1, paddingBottom: 8 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'flex-start', minWidth: 'max-content' }}>
+            {JM_NODES.map((node, i) => {
+              const personas = JM_PERSONAS[node.id] || [];
+              const shown = personas.slice(0, 3);
+              const extra = personas.length - 3;
+              const isSelected = selected === node.id;
+              return (
+                <React.Fragment key={node.id}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 108 }}>
+                    {/* Thumbnail card */}
+                    <div onClick={() => setSelected(isSelected ? null : node.id)}
+                    style={{ width: 96, border: `1px solid ${isSelected ? '#1a1a1a' : '#e8e8e8'}`,
+                      borderRadius: 8, background: '#fff',
+                      cursor: 'pointer', overflow: 'hidden', transition: 'border-color 200ms ease-out',
+                      boxShadow: isSelected ? '0 0 0 2px rgba(26,26,26,0.08)' : 'none' }}
+                    onMouseEnter={(e) => {if (!isSelected) e.currentTarget.style.borderColor = '#d4d4d4';}}
+                    onMouseLeave={(e) => {if (!isSelected) e.currentTarget.style.borderColor = '#e8e8e8';}}>
+                      <div style={{ padding: '6px 6px 0' }}>
+                        <JMThumb id={node.id} isDone={node.isDone} />
+                      </div>
+                      <div style={{ padding: '4px 6px 6px', borderTop: '1px solid #f0f0f0' }}>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: '#1a1a1a',
+                          textAlign: 'center', letterSpacing: '-0.005em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {node.label}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Persona avatars */}
+                    {personas.length > 0 &&
+                    <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center', maxWidth: 100 }}>
+                        {shown.map((p, j) => <Av key={j} initial={p.initial} state={p.state} size={28} />)}
+                        {extra > 0 &&
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#fff', letterSpacing: '-0.36px' }}>
+                            +{extra}
+                          </div>
+                      }
+                      </div>
+                    }
+
+                    {/* Callout — all nodes with activity */}
+                    {node.callout &&
+                    <div style={{ marginTop: 8, border: `1px ${node.stuck ? 'dashed' : 'solid'} ${node.stuck ? '#ff4d2c' : '#e8e8e8'}`, borderRadius: 6, padding: '4px 7px', maxWidth: 104,
+                      fontSize: 9, color: node.stuck ? '#ff4d2c' : '#707070', textAlign: 'center', lineHeight: 1.5, letterSpacing: '-0.005em',
+                      fontFamily: 'Inter,"Noto Sans JP",sans-serif' }}>
+                        {node.callout}
+                      </div>
+                    }
+                  </div>
+
+                  {/* Arrow */}
+                  {i < JM_NODES.length - 1 &&
+                  <div style={{ display: 'flex', alignItems: 'center', paddingTop: 26, width: 40, flexShrink: 0 }}>
+                      <div style={{ flex: 1, height: 1, background: '#d4d4d4' }} />
+                      <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+                        <path d="M1 1l4 4-4 4" stroke="#d4d4d4" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  }
+                </React.Fragment>);
+
+            })}
+          </div>
+        </div>
+        {/* AI Analyst stream */}
+        <div style={{borderTop:'1px solid #f7f7f7',marginTop:8,paddingTop:10,flex:1,overflowY:'auto',minHeight:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+            <div style={{width:6,height:6,borderRadius:'50%',background:'#1a1a1a',animation:'ghost-live-dot 2200ms ease-in-out infinite'}}/>
+            <span style={{fontFamily:'"IBM Plex Mono",monospace',fontSize:9,fontWeight:500,color:'#707070',letterSpacing:'-0.36px'}}>AI ANALYST</span>
+            <span style={{fontFamily:'"IBM Plex Mono",monospace',fontSize:9,color:'#a8a8a8',letterSpacing:'-0.36px'}}>— 客観分析エージェント</span>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {visibleAnalyst.map((entry,i)=>(
+              <div key={i} style={{display:'flex',gap:8,animation:'ghost-log 400ms ease-out both',borderLeft:'2px solid #e8e8e8',paddingLeft:8}}>
+                <span style={{fontFamily:'"IBM Plex Mono",monospace',fontSize:9,color:'#a8a8a8',letterSpacing:'-0.36px',flexShrink:0,marginTop:1}}>{entry.time}</span>
+                <span style={{fontSize:11,color:'#707070',lineHeight:1.5,letterSpacing:'-0.005em'}}>{entry.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <EmotionChart/>
+    </div>);
+
+}
+
+
+/* ─── EMOTION CHART ─── */
+const EM_DATA = {
+  positive: [70, 72, 75, 74, 78, 76, 80, 79, 84, 88, 83, 86, 90, 88, 92],
+  neutral: [48, 47, 50, 49, 48, 52, 55, 53, 57, 58, 56, 60, 58, 62, 60],
+  negative: [22, 25, 24, 28, 27, 30, 26, 29, 31, 28, 27, 30, 28, 31, 29],
+  dropout: [8, 10, 9, 12, 11, 10, 12, 14, 11, 13, 15, 12, 14, 13, 11]
+};
+const EM_LINES = [
+{ key: 'positive', color: '#3fb069', label: 'ポジティブ', pct: 48 },
+{ key: 'neutral', color: '#a8a8a8', label: 'ニュートラル', pct: 28 },
+{ key: 'negative', color: '#f59b42', label: 'ネガティブ', pct: 16 },
+{ key: 'dropout', color: '#ff4d2c', label: '離脱に近い', pct: 8 }];
+
+const EM_TIMES = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:32'];
+
+function EmotionChart() {
+  const W = 440,H = 100,pL = 28,pR = 8,pT = 8,pB = 18;
+  const cW = W - pL - pR,cH = H - pT - pB;
+  const N = EM_DATA.positive.length;
+  const gx = (i) => (pL + i / (N - 1) * cW).toFixed(1);
+  const gy = (v) => (pT + (1 - v / 100) * cH).toFixed(1);
+  const path = (vals) => vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${gx(i)} ${gy(v)}`).join(' ');
+  const tIdxs = [0, Math.round(N * 2 / 14), Math.round(N * 4 / 14), Math.round(N * 6 / 14), Math.round(N * 8 / 14), Math.round(N * 10 / 14), Math.round(N * 12 / 14), N - 1];
+  return (
+    <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '12px 14px', flexShrink: 0 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em', marginBottom: 8 }}>リアルタイム・感情推移</div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 8 }}>
+        {EM_LINES.map((l) =>
+        <div key={l.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, flexShrink: 0 }} />
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#707070', letterSpacing: '-0.3px' }}>{l.label} {l.pct}%</span>
+          </div>
+        )}
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible' }}>
+        {[0, 50, 100].map((v) =>
+        <React.Fragment key={v}>
+            <line x1={pL} y1={gy(v)} x2={W - pR} y2={gy(v)} stroke="#e8e8e8" strokeWidth="1" />
+            <text x={pL - 4} y={parseFloat(gy(v)) + 3.5} textAnchor="end" fontSize="9" fill="#a8a8a8" fontFamily="IBM Plex Mono,monospace">{v}</text>
+          </React.Fragment>
+        )}
+        {EM_LINES.map((l) =>
+        <path key={l.key} d={path(EM_DATA[l.key])} fill="none" stroke={l.color} strokeWidth="1.5" strokeLinejoin="round" />
+        )}
+        {tIdxs.map((i, j) =>
+        <text key={j} x={gx(i)} y={H - 1} textAnchor="middle" fontSize="9" fill="#a8a8a8" fontFamily="IBM Plex Mono,monospace">{EM_TIMES[j]}</text>
+        )}
+      </svg>
+    </div>);
+
+}
+
+/* ─── STATIC CENTER ─── */
+function ScoreHero() {
+  const mono = { fontFamily: '"IBM Plex Mono",monospace' };
+  const target = 80,actual = 37.5,achieved = Math.round(actual / target * 100);
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '32px 48px', animation: 'ghost-score 1100ms ease-out both', animationDelay: '80ms' }}>
+      {/* KPI status badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+        <span style={{ ...mono, fontSize: 11, fontWeight: 500, background: '#ff4d2c', color: '#fff', padding: '4px 10px', borderRadius: 4, letterSpacing: '-0.36px' }}>KPI未達</span>
+        <span style={{ ...mono, fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.36px' }}>RUN #249 · 2026-06-28</span>
+      </div>
+
+      {/* Achievement rate hero */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+          <span style={{ ...mono, fontSize: 88, fontWeight: 500, color: '#ff4d2c', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{achieved}</span>
+          <span style={{ ...mono, fontSize: 28, fontWeight: 500, color: '#ff4d2c' }}>%</span>
+          <span style={{ fontSize: 15, color: '#707070', letterSpacing: '-0.005em', marginLeft: 4, alignSelf: 'flex-end', marginBottom: 10 }}>目標達成度</span>
+        </div>
+        {/* Progress bar */}
+        <div style={{ position: 'relative', height: 6, background: '#f7f7f7', borderRadius: 3, marginBottom: 12 }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${actual}%`, background: '#ff4d2c', borderRadius: 3, transition: 'width 1.2s ease-out' }} />
+          <div style={{ position: 'absolute', left: `${target}%`, top: -4, height: 14, width: 1.5, background: '#d4d4d4', borderRadius: 1 }} />
+          <div style={{ ...mono, position: 'absolute', left: `${target}%`, top: 12, fontSize: 9, color: '#a8a8a8', transform: 'translateX(-50%)', letterSpacing: '-0.3px' }}>目標 {target}%</div>
+        </div>
+      </div>
+
+      {/* Goal breakdown */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 18px', marginBottom: 20, background: '#fafafa' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
+          {[{ l: '目標', v: `${target}%`, c: '#a8a8a8' }, { l: '実績', v: `${actual}%（3 / 8人）`, c: '#ff4d2c' }, { l: '未達', v: `−${(target - actual).toFixed(1)}pt`, c: '#ff4d2c' }].map((row, i) =>
+          <div key={row.l} style={{ borderRight: i < 2 ? '1px solid #e8e8e8' : 'none', paddingRight: i < 2 ? 16 : 0, paddingLeft: i > 0 ? 16 : 0 }}>
+              <div style={{ fontSize: 11, color: '#a8a8a8', letterSpacing: '-0.005em', marginBottom: 4 }}>{row.l}</div>
+              <div style={{ ...mono, fontSize: 14, fontWeight: 500, color: row.c, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.36px' }}>{row.v}</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Confusion Score */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid #f7f7f7' }}>
+        <div>
+          <div style={{ ...mono, fontSize: 11, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.44px', marginBottom: 4 }}>体験摩擦スコア</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ ...mono, fontSize: 48, fontWeight: 500, color: '#1a1a1a', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>42</span>
+            <span style={{ ...mono, fontSize: 20, color: '#ff4d2c' }}>/</span>
+            <span style={{ ...mono, fontSize: 20, color: '#a8a8a8', fontVariantNumeric: 'tabular-nums' }}>100</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, height: 4, background: '#f7f7f7', borderRadius: 2, marginTop: 8 }}>
+          <div style={{ width: '42%', height: '100%', background: '#ff4d2c', borderRadius: 2, transition: 'width 1s ease-out' }} />
+        </div>
+      </div>
+
+      {/* 3-col metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }}>
+        {[
+        { l: 'タスク完了率', v: '37.5%', sub: '3 / 8人', c: '#ff4d2c' },
+        { l: '停滞率', v: '62.5%', sub: '5 / 8人', c: '#ff4d2c' },
+        { l: '平均滞在時間', v: '14:32', sub: '', c: '#1a1a1a' }].
+        map((m, i) =>
+        <div key={m.l} style={{ borderRight: i < 2 ? '1px solid #f7f7f7' : 'none', paddingRight: i < 2 ? 20 : 0, paddingLeft: i > 0 ? 20 : 0 }}>
+            <div style={{ fontSize: 11, color: '#707070', letterSpacing: '-0.005em', marginBottom: 6 }}>{m.l}</div>
+            <div style={{ ...mono, fontSize: 28, fontWeight: 500, color: m.c, fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 2 }}>{m.v}</div>
+            {m.sub && <div style={{ ...mono, fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px' }}>{m.sub}</div>}
+          </div>
+        )}
+      </div>
+    </div>);
+
+}
+function Heatmap() {
+  return (
+    <div style={{ padding: '20px 32px', height: '100%', overflowY: 'auto' }}>
+      <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 12 }}>EMOTION HEATMAP — example-shop.com / product detail</div>
+      <div style={{ position: 'relative', border: '1px solid #e8e8e8', borderRadius: 8, overflow: 'hidden', background: '#fafafa', animation: 'ghost-fadein 600ms ease-out both' }}>
+        <div style={{ background: '#fff', borderBottom: '1px solid #e8e8e8', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 18, height: 18, borderRadius: 4, background: '#e8e8e8' }} /><div style={{ width: 70, height: 7, borderRadius: 3, background: '#e8e8e8' }} />
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}><div style={{ width: 44, height: 7, borderRadius: 3, background: '#e8e8e8' }} /><div style={{ width: 44, height: 7, borderRadius: 3, background: '#e8e8e8' }} /></div>
+        </div>
+        <div style={{ display: 'flex', minHeight: 320 }}>
+          <div style={{ width: '50%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 320 }}>
+            <div style={{ width: 110, height: 140, background: '#e0e0e0', borderRadius: 8 }} />
+          </div>
+          <div style={{ width: '50%', padding: '20px', display: 'flex', flexDirection: 'column', gap: 9, background: '#fff' }}>
+            <div style={{ width: '82%', height: 10, borderRadius: 4, background: '#e8e8e8' }} /><div style={{ width: '62%', height: 8, borderRadius: 4, background: '#f0f0f0' }} />
+            <div style={{ width: '40%', height: 13, borderRadius: 4, background: '#d4d4d4', marginTop: 4 }} /><div style={{ width: '30%', height: 8, borderRadius: 4, background: '#f0f0f0' }} />
+            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>{[1, 2, 3].map((i) => <div key={i} style={{ width: 28, height: 28, borderRadius: 4, background: '#f0f0f0' }} />)}</div>
+            <div style={{ width: '92%', height: 38, borderRadius: 500, background: '#e8e8e8', marginTop: 6, border: '1px dashed rgba(255,77,44,0.5)' }} />
+            <div style={{ width: '92%', height: 26, borderRadius: 500, background: '#f7f7f7', border: '1px solid #e8e8e8' }} />
+          </div>
+        </div>
+        {HEAT_ZONES.map((z, i) =>
+        <div key={i} style={{ position: 'absolute', left: z.x, top: z.y, width: z.w, height: z.h,
+          background: `rgba(255,77,44,${z.intensity})`, borderRadius: 4,
+          border: z.intensity > .4 ? '1px dashed rgba(255,77,44,.5)' : 'none', pointerEvents: 'none' }} />
+        )}
+        <div style={{ position: 'absolute', bottom: 8, right: 10, display: 'flex', gap: 4, alignItems: 'center' }}>
+          {[.08, .18, .32, .55].map((o) => <div key={o} style={{ width: 13, height: 13, borderRadius: 2, background: `rgba(255,77,44,${o})` }} />)}
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#707070', marginLeft: 4 }}>LOW → HIGH</span>
+        </div>
+      </div>
+    </div>);
+
+}
+function Graveyard() {
+  return (
+    <div style={{ padding: '20px 32px', height: '100%', overflowY: 'auto' }}>
+      <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 12 }}>GRAVEYARD — 離脱の墓場</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, animation: 'ghost-fadein 600ms ease-out both' }}>
+        {GRAVES.map((g, i) =>
+        <div key={i} style={{ border: '1px solid #e8e8e8', borderRadius: 10, overflow: 'hidden', background: '#fff', animation: 'ghost-reveal 700ms ease-out both', animationDelay: `${i * 100}ms` }}>
+            <div style={{ background: '#f7f7f7', height: 100, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '68%', height: 70, background: '#ebebeb', borderRadius: 5 }}>
+                <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ width: '80%', height: 6, background: '#ddd', borderRadius: 3 }} /><div style={{ width: '60%', height: 6, background: '#e4e4e4', borderRadius: 3 }} />
+                  <div style={{ width: '90%', height: 18, background: '#d4d4d4', borderRadius: 500, marginTop: 4 }} />
+                </div>
+              </div>
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,77,44,.05)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', top: 6, left: 6 }}><span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, letterSpacing: '-0.44px', background: '#ff4d2c', color: '#fff', padding: '2px 6px', borderRadius: 3 }}>STUCK {g.elapsed}</span></div>
+            </div>
+            <div style={{ padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#fff5f2', border: '1px solid #ff4d2c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 10, fontWeight: 500, color: '#ff4d2c', flexShrink: 0 }}>{g.initial}</div>
+              <div><div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#707070', letterSpacing: '-0.36px', marginBottom: 3 }}>{g.id} · {g.screen}</div><div style={{ fontSize: 12, color: '#1a1a1a', lineHeight: 1.4, letterSpacing: '-0.005em' }}>「{g.quote}」</div></div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>);
+
+}
+
+/* ─── GROWTH VIEW ─── */
+const GROWTH_ITEMS = [
+{ priority: 'P1', impact: -18, effort: '低', label: 'カートボタンの視認性を改善',
+  detail: '「カートに追加」ボタンを商品詳細ページの最上部・スクロール追従バーの両方に配置する。現在は画面下部のみで 62% のペルソナが見つけられなかった。',
+  action: 'ボタンを sticky で上部固定 + ラベルを「今すぐカートへ」に変更',
+  ab: 'A: 現状 / B: sticky ボタン' },
+{ priority: 'P2', impact: -12, effort: '中', label: '決済フローのステップ数を削減',
+  detail: '現在 6 ステップある入力フォームを 3 ステップに圧縮。住所・支払い情報の自動補完を導入することでシニア層の離脱を防げる。',
+  action: 'ゲスト購入フロー簡素化 + 住所 API 導入',
+  ab: 'A: 6 ステップ / B: 3 ステップ' },
+{ priority: 'P3', impact: -5, effort: '低', label: '在庫残少の表示を強化',
+  detail: '「残り 3 点」の表示が小さく見落とされている。赤字＋アイコンで強調することで購買緊迫感と可視性が向上する。',
+  action: '在庫テキストを Phantom Coral で強調 + アイコン追加',
+  ab: 'A: 現状 / B: 強調スタイル' }];
+
+
+function GrowthView() {
+  const totalImpact = GROWTH_ITEMS.reduce((s, i) => s + i.impact, 0);
+  const projectedScore = 42 + totalImpact;
+  return (
+    <div style={{ padding: '24px 32px', height: '100%', overflowY: 'auto' }}>
+      <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 20 }}>GROWTH OPPORTUNITY — AI ANALYSIS · RUN #249</div>
+      {/* Score projection banner */}
+      <div style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', marginBottom: 20, background: '#fafafa' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 28, fontWeight: 500, color: '#ff4d2c', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>42.</span>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, color: '#a8a8a8', letterSpacing: '-0.36px' }}>現在</span>
+          </div>
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 14, color: '#a8a8a8' }}>→</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 28, fontWeight: 500, color: '#3fb069', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{projectedScore}.</span>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, color: '#a8a8a8', letterSpacing: '-0.36px' }}>予測</span>
+          </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 20, fontWeight: 500, color: '#3fb069', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{totalImpact}</span>
+            <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px' }}>TOTAL IMPACT</span>
+          </div>
+        </div>
+        <div style={{ height: 4, background: '#e8e8e8', borderRadius: 2, position: 'relative' }}>
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '42%', background: '#ff4d2c', borderRadius: 2 }} />
+          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${Math.max(projectedScore, 0)}%`, background: '#3fb069', borderRadius: 2, opacity: .5 }} />
+        </div>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', marginTop: 6 }}>全改善施策適用後の予測スコア</div>
+      </div>
+      {/* Improvement cards */}
+      {GROWTH_ITEMS.map((item, i) =>
+      <div key={i} style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '18px 20px', marginBottom: 12, background: '#fff', transition: 'border-color 200ms ease-out' }}
+      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#d4d4d4'}
+      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e8e8e8'}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, letterSpacing: '-0.44px',
+              padding: '3px 7px', borderRadius: 4, background: '#1a1a1a', color: '#fff' }}>{item.priority}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{item.label}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, color: '#3fb069', letterSpacing: '-0.36px', fontVariantNumeric: 'tabular-nums' }}>{item.impact}</span>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, padding: '2px 7px', borderRadius: 4, background: '#f7f7f7', color: '#707070', letterSpacing: '-0.36px' }}>工数 {item.effort}</span>
+            </div>
+          </div>
+          {/* Detail */}
+          <div style={{ fontSize: 13, color: '#707070', lineHeight: 1.6, letterSpacing: '-0.005em', marginBottom: 10 }}>{item.detail}</div>
+          {/* Action + AB */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, background: '#f7f7f7', borderRadius: 8, padding: '9px 12px' }}>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 4 }}>RECOMMENDED ACTION</div>
+              <div style={{ fontSize: 12, color: '#1a1a1a', lineHeight: 1.5, letterSpacing: '-0.005em' }}>{item.action}</div>
+            </div>
+            <div style={{ background: '#f7f7f7', borderRadius: 8, padding: '9px 12px', minWidth: 140 }}>
+              <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 4 }}>A/B TEST</div>
+              <div style={{ fontSize: 12, color: '#707070', letterSpacing: '-0.005em' }}>{item.ab}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>);
+
+}
+
+/* ─── MINI CHART ─── */
+function MiniChart({ liveScore }) {
+  const runs = [...CHART_RUNS, { label: '#249', score: liveScore ?? 65 }];
+  const W = 272,H = 88,pX = 28,pY = 10,cW = W - pX * 2,cH = H - pY * 2 - 14,mn = 20,mx = 80;
+  const pts = runs.map((r, i) => ({ x: pX + i / (runs.length - 1) * cW, y: pY + (1 - (r.score - mn) / (mx - mn)) * cH, ...r }));
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  return (
+    <svg width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
+      {[40, 60, 80].map((v) => {const y = pY + (1 - (v - mn) / (mx - mn)) * cH;return <React.Fragment key={v}>
+        <line x1={pX} y1={y} x2={W - pX} y2={y} stroke="#e8e8e8" strokeWidth="1" />
+        <text x={pX - 4} y={y + 3.5} textAnchor="end" fontSize="9" fill="#a8a8a8" fontFamily='"IBM Plex Mono",monospace'>{v}</text>
+      </React.Fragment>;})}
+      <path d={d} fill="none" stroke="#ff4d2c" strokeWidth="1.5" strokeLinejoin="round" />
+      {pts.map((p, i) => <React.Fragment key={i}>
+        <circle cx={p.x} cy={p.y} r={i === pts.length - 1 ? 4 : 2.5} fill={i === pts.length - 1 ? '#ff4d2c' : '#fff'} stroke="#ff4d2c" strokeWidth="1.5" />
+        <text x={p.x} y={H - 1} textAnchor="middle" fontSize="9" fill="#a8a8a8" fontFamily='"IBM Plex Mono",monospace'>{p.label}</text>
+      </React.Fragment>)}
+    </svg>);
+
+}
+
+/* ─── RIGHT PANELS ─── */
+function DynamicRight({ logs, liveScore }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid #e8e8e8' }}>
+        <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 10 }}>CONFUSION SCORE TREND</div>
+        <MiniChart liveScore={liveScore} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#707070', letterSpacing: '-0.36px' }}>現在のスコア</span>
+          <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, color: '#ff4d2c', fontVariantNumeric: 'tabular-nums' }}>{liveScore ?? '—'}</span>
+        </div>
+      </div>
+      <div style={{ padding: '12px 20px 6px', borderBottom: '1px solid #f7f7f7', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Dot /><span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#1a1a1a', letterSpacing: '-0.36px' }}>THOUGHT LOG</span>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {logs.map((e) =>
+        <div key={e.id} style={{ padding: '9px 20px', borderBottom: '1px solid #f7f7f7', animation: 'ghost-log 400ms ease-out both', background: e.state === 'stuck' ? '#fff5f2' : undefined }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+              <Av initial={e.initial} state={e.state} size={20} />
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#707070', letterSpacing: '-0.36px' }}>{e.persona}</span>
+              <Badge label={e.time} tone="muted" />
+              {e.state === 'stuck' && <Badge label="STUCK" tone="stuck" />}
+            </div>
+            <div style={{ fontSize: 12, color: '#1a1a1a', lineHeight: 1.5, letterSpacing: '-0.005em', paddingLeft: 27 }}>「{e.text}」</div>
+          </div>
+        )}
+      </div>
+    </div>);
+
+}
+function StaticRight({ visible }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', animation: visible ? 'ghost-fadein 500ms ease-out both' : 'none', animationDelay: '150ms' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid #e8e8e8' }}><span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, fontWeight: 500, color: '#707070', letterSpacing: '-0.36px' }}>INSIGHT</span></div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 0' }}>
+        {ISSUES.map((iss, i) =>
+        <div key={i} style={{ margin: '0 14px 10px', padding: '13px 15px', background: iss.tone === 'alert' ? '#fff5f2' : '#fff', border: `1px solid ${iss.tone === 'alert' ? '#ff4d2c' : '#e8e8e8'}`, borderRadius: 12, animation: 'ghost-reveal 700ms ease-out both', animationDelay: `${250 + i * 130}ms` }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em', lineHeight: 1.3 }}>{iss.label}</div>
+              <Badge label={`${iss.count}名`} tone={iss.tone === 'alert' ? 'stuck' : 'done'} />
+            </div>
+            <div style={{ fontSize: 12, color: '#707070', lineHeight: 1.5, letterSpacing: '-0.005em', marginBottom: 9 }}>{iss.desc}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 4, background: '#f7f7f7', borderRadius: 2 }}><div style={{ width: `${iss.pct}%`, height: '100%', background: iss.tone === 'alert' ? '#ff4d2c' : '#1a1a1a', borderRadius: 2, transition: 'width 800ms ease-out' }} /></div>
+              <span style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, color: '#707070', letterSpacing: '-0.36px', fontVariantNumeric: 'tabular-nums', minWidth: 30 }}>{iss.pct}%</span>
+            </div>
+          </div>
+        )}
+        <div style={{ padding: '10px 14px 0' }}>
+          <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px', marginBottom: 10 }}>PERSONA COUNCIL</div>
+          {COUNCIL.map((m, i) =>
+          <div key={i} style={{ display: 'flex', flexDirection: m.side === 'right' ? 'row-reverse' : 'row', gap: 7, alignItems: 'flex-end', marginBottom: 9 }}>
+              <div style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, background: m.state === 'stuck' ? '#fff5f2' : '#f7f7f7', border: `1px solid ${m.state === 'stuck' ? '#ff4d2c' : m.state === 'done' ? '#3fb069' : '#e8e8e8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 10, fontWeight: 500, color: m.state === 'stuck' ? '#ff4d2c' : m.state === 'done' ? '#3fb069' : '#1a1a1a' }}>{m.initial}</div>
+              <div style={{ maxWidth: '76%' }}>
+                <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 9, color: '#a8a8a8', letterSpacing: '-0.3px', marginBottom: 2, textAlign: m.side === 'right' ? 'right' : 'left' }}>{m.id}</div>
+                <div style={{ background: m.side === 'right' ? '#f7f7f7' : '#fff', border: `1px solid ${m.state === 'stuck' ? 'rgba(255,77,44,.25)' : '#e8e8e8'}`, borderRadius: m.side === 'right' ? '10px 10px 3px 10px' : '10px 10px 10px 3px', padding: '7px 10px', fontSize: 11, color: '#1a1a1a', lineHeight: 1.5, letterSpacing: '-0.005em', fontFamily: 'Inter,"Noto Sans JP",sans-serif' }}>「{m.text}」</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* ─── HEADER ─── */
+function Header({ phase, centerTab, setCenterTab, onScan, setupStep, commentary, setCommentary }) {
+  const TABS = [{ k: 'score', l: 'SCORE' }, { k: 'heatmap', l: 'HEATMAP' }, { k: 'graveyard', l: 'GRAVEYARD' }, { k: 'growth', l: 'GROWTH' }];
+  const phaseLabel = { idle: 'Ready', setup: `Setup — step ${setupStep}/3`, dynamic: 'Validation running', static: 'Validation report', reports: 'Past reports' };
+  return (
+    <div style={{ borderBottom: '1px solid #e8e8e8', flexShrink: 0 }}>
+      <div style={{ padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.005em' }}>{phaseLabel[phase] || phase}</span>
+          {phase === 'dynamic' && <Badge label="LIVE" tone="live" />}
+          {phase === 'static' && <Badge label="DONE" tone="done" />}
+          {phase === 'setup' && <Badge label={`STEP ${String(setupStep).padStart(2, '0')}`} />}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {phase === 'dynamic' &&
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 0, background: '#f7f7f7', borderRadius: 500, padding: 3 }}>
+                <button onClick={() => setCommentary(false)}
+              style={{ fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', padding: '5px 14px', borderRadius: 500, border: 'none', cursor: 'pointer', transition: 'all 200ms ease-out', background: !commentary ? '#1a1a1a' : 'transparent', color: !commentary ? '#fff' : '#707070' }}>
+                  実况 OFF
+                </button>
+                <button onClick={() => setCommentary(true)}
+              style={{ fontFamily: 'Inter,"Noto Sans JP",sans-serif', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', padding: '5px 14px', borderRadius: 500, border: 'none', cursor: 'pointer', transition: 'all 200ms ease-out', background: commentary ? '#ff4d2c' : 'transparent', color: commentary ? '#fff' : '#707070' }}>
+                  実况 ON
+                </button>
+              </div>
+              <button onClick={onScan} style={{ background: '#ff4d2c', color: '#fff', border: 'none', borderRadius: 500, padding: '8px 22px', fontSize: 12, fontWeight: 500, letterSpacing: '-0.26px', cursor: 'pointer', transition: 'opacity 200ms' }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '.85'} onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}>
+                Completed!
+              </button>
+            </div>
+          }
+          {phase === 'static' && <span></span>}
+        </div>
+      </div>
+      {phase === 'static' &&
+      <div style={{ padding: '0 28px 12px', display: 'flex', gap: 4 }}>
+          {TABS.map((t) =>
+        <button key={t.k} onClick={() => setCenterTab(t.k)} style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 11, fontWeight: 500, letterSpacing: '-0.36px', padding: '5px 14px', borderRadius: 500, border: 'none', cursor: 'pointer', transition: 'all 200ms ease-out', background: centerTab === t.k ? '#1a1a1a' : 'transparent', color: centerTab === t.k ? '#fff' : '#707070' }}>{t.l}</button>
+        )}
+        </div>
+      }
+    </div>);
+
+}
+
+/* ─── APP ─── */
+function App() {
+  const [phase, setPhase] = useState('idle');
+  const [scanning, setScanning] = useState(false);
+  const [setupStep, setSetupStep] = useState(1);
+  const [config, setConfig] = useState({ url: '', device: 'mobile', purpose: '', personaCount: 12, ageGroups: ['30代', '40代'], literacy: 'medium', taskDesc: '', targetType: 'url', uploadedImages: [], gender: 'balanced', interests: [], priorities: [], personasGenerated: false, kpiCompletion: 80, kpiScore: 40 });
+  const [logs, setLogs] = useState([]);
+  const [centerTab, setCenterTab] = useState('score');
+  const [liveScore, setLiveScore] = useState(72);
+  const [commentary, setCommentary] = useState(false);
+  const timer = useRef(null);
+
+  const updateConfig = useCallback((patch) => setConfig((p) => ({ ...p, ...patch })), []);
+
+  useEffect(() => {
+    if (phase !== 'dynamic') return;
+    setLogs(LOGS.slice(0, 2));let idx = 2;
+    timer.current = setInterval(() => {if (idx >= LOGS.length) {clearInterval(timer.current);return;}setLogs((p) => [...p, LOGS[idx++]]);}, 2500);
+    return () => clearInterval(timer.current);
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'dynamic') return;
+    setLiveScore(72);
+    const t = setInterval(() => setLiveScore((p) => p > 64 ? p - 1 : p), 600);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  const handleScan = useCallback(() => {
+    if (scanning || phase !== 'dynamic') return;
+    setScanning(true);
+    setTimeout(() => {setScanning(false);setPhase('static');setCenterTab('score');}, 820);
+  }, [scanning, phase]);
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+      {scanning && <div className="scan-overlay"><div className="scan-line" /></div>}
+      <LeftPanel phase={phase} url={config.url} setUrl={(u) => updateConfig({ url: u })}
+      onNew={() => {setPhase('setup');setSetupStep(1);}} config={config}
+      onReports={() => setPhase((p) => p === 'reports' ? 'idle' : 'reports')} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header phase={phase} centerTab={centerTab} setCenterTab={setCenterTab} onScan={handleScan} setupStep={setupStep} commentary={commentary} setCommentary={setCommentary} />
+        {/* REPORTS */}
+        {phase === 'reports' &&
+        <ReportsView
+          onOpen={() => setPhase('static')}
+          onNew={() => {setPhase('setup');setSetupStep(1);}} />
+        }
+        {/* SETUP */}
+        {phase === 'setup' &&
+        <SetupPanel step={setupStep} config={config} onChange={updateConfig}
+        onNext={() => setSetupStep((s) => s + 1)} onBack={() => setSetupStep((s) => s - 1)}
+        onRun={() => {setPhase('dynamic');}} />
+        }
+        {/* DASHBOARD */}
+        {phase !== 'setup' && phase !== 'reports' &&
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              {phase === 'idle' && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 16 }}>
+                <div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 12, color: '#a8a8a8', letterSpacing: '-0.36px' }}>URL を入力して検証を開始してください。</div>
+              </div>}
+              {phase === 'dynamic' && <LiveJourneyMap config={config} />}
+              {phase === 'static' && centerTab === 'score' && <ScoreHero />}
+              {phase === 'static' && centerTab === 'heatmap' && <Heatmap />}
+              {phase === 'static' && centerTab === 'graveyard' && <Graveyard />}
+              {phase === 'static' && centerTab === 'growth' && <GrowthView />}
+            </div>
+            <div style={{ width: 340, borderLeft: '1px solid #e8e8e8', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              {phase === 'dynamic' && <DynamicRight logs={logs} liveScore={liveScore} />}
+              {phase === 'static' && <StaticRight visible />}
+              {phase === 'idle' && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><div style={{ fontFamily: '"IBM Plex Mono",monospace', fontSize: 10, color: '#a8a8a8', letterSpacing: '-0.36px' }}>INSIGHT</div></div>}
+            </div>
+          </div>
+        }
+      </div>
+    </div>);
+
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
