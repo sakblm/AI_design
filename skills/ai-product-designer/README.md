@@ -16,7 +16,7 @@ Codexで、既存UIやデザインシステムをもとに、画面改善案・�
 2. 展開後の`ai-product-designer`フォルダを以下へ置きます。
 
    ```text
-   ~/.codex/skills/ai-product-designer/
+   ~/.codex/skills/
    ```
 
 3. Codexを再起動するか、新しいタスクを開きます。
