@@ -1,4 +1,0 @@
-interface:
-  display_name: "AI Product Designer"
-  short_description: "設計計画・画面密度・視覚QAを品質ゲートで保証する"
-  default_prompt: "Use $ai-product-designer to ask me for the intended output level, then turn product evidence into a quality-gated design plan, complete HTML wireframes or UI mockups, visual QA renders, and a portable single-HTML or packaged delivery."
