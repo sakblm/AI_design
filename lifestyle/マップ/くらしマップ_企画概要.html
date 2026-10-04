@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="くらしマップの企画アイデア概要。検討用の説明資料です。">
+  <title>くらしマップ｜企画概要</title>
+  <style>
+    :root {
+      --ink: #17243d;
+      --muted: #667085;
+      --line: #dbe3ee;
+      --surface: #ffffff;
+      --canvas: #f5f8fc;
+      --blue: #2166dc;
+      --blue-pale: #e9f0ff;
+      --mint: #dff7ed;
+      --coral: #ffe8e3;
+      --yellow: #fff3c9;
+      --radius: 24px;
+      --shadow: 0 18px 44px rgba(23, 36, 61, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar {
+      position: sticky; top: 0; z-index: 5;
+      backdrop-filter: blur(14px);
+      background: rgba(245, 248, 252, .88);
+      border-bottom: 1px solid rgba(219, 227, 238, .8);
+    }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 58px; gap: 20px; }
+    .brand { font-size: 14px; font-weight: 800; letter-spacing: .03em; }
+    nav { display: flex; gap: 18px; font-size: 13px; color: var(--muted); }
+    nav a { text-decoration: none; }
+    nav a:hover { color: var(--blue); }
+    .hero { padding: 80px 0 64px; overflow: hidden; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: var(--blue-pale); color: #174aab; font-size: 13px; font-weight: 800; }
+    .hero-grid { display: grid; grid-template-columns: 1.18fr .82fr; align-items: center; gap: 46px; }
+    h1 { max-width: 730px; margin: 16px 0 18px; font-size: clamp(40px, 6.2vw, 76px); line-height: 1.16; letter-spacing: -.055em; }
+    h1 em { color: var(--blue); font-style: normal; }
+    .lead { max-width: 610px; font-size: 18px; color: #44516a; }
+    .status { margin-top: 24px; font-size: 13px; color: var(--muted); }
+    .scene {
+      position: relative; min-height: 340px; padding: 24px; border-radius: 30px; overflow: hidden;
+      background: linear-gradient(145deg, #d9e9ff, #eff7ff 52%, #dff7ed); box-shadow: var(--shadow);
+    }
+    .scene::after { content: ""; position: absolute; right: -48px; bottom: -72px; width: 270px; height: 190px; border-radius: 52% 48% 0 0; background: #96cf87; transform: rotate(-4deg); }
+    .sun { position: absolute; right: 28px; top: 28px; width: 48px; height: 48px; border-radius: 50%; background: #ffd768; }
+    .city { position: absolute; right: 38px; bottom: 104px; display: flex; align-items: end; gap: 7px; z-index: 1; }
+    .city span { display: block; width: 28px; background: #9ec8ed; border-radius: 4px 4px 0 0; }
+    .city span:nth-child(1) { height: 48px; }.city span:nth-child(2) { height: 88px; }.city span:nth-child(3) { height: 60px; }.city span:nth-child(4) { height: 112px; }
+    .house { position: absolute; right: 95px; bottom: 85px; z-index: 2; width: 100px; height: 76px; border-radius: 6px; background: #fdfdfd; border: 4px solid #314c75; }
+    .house::before { content: ""; position: absolute; left: -11px; top: -50px; border-left: 58px solid transparent; border-right: 58px solid transparent; border-bottom: 54px solid #f78475; }
+    .house::after { content: ""; position: absolute; left: 38px; bottom: 0; width: 22px; height: 37px; background: #f2c268; }
+    .home-card { position: relative; z-index: 3; width: 73%; padding: 17px; border-radius: 18px; background: rgba(255,255,255,.94); box-shadow: 0 9px 25px rgba(41, 73, 112, .12); }
+    .home-card small { display: block; color: var(--blue); font-weight: 800; }.home-card strong { display: block; margin-top: 4px; font-size: 18px; line-height: 1.4; }.home-card p { margin: 7px 0 0; font-size: 12px; color: var(--muted); }
+    section { padding: 78px 0; }
+    .section-label { margin: 0 0 9px; color: var(--blue); font-size: 13px; letter-spacing: .08em; font-weight: 900; }
+    h2 { margin: 0; font-size: clamp(29px, 4vw, 46px); line-height: 1.28; letter-spacing: -.04em; }
+    .section-intro { max-width: 680px; margin: 14px 0 34px; color: #526078; font-size: 16px; }
+    .problem-grid, .feature-grid, .example-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .card .num { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue-pale); color: var(--blue); font-size: 13px; font-weight: 900; }
+    .card h3 { margin: 16px 0 8px; font-size: 19px; letter-spacing: -.025em; }.card p { margin: 0; font-size: 14px; color: var(--muted); }
+    .formula { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 12px; padding: 28px; background: var(--ink); color: white; border-radius: 28px; }
+    .formula div { padding: 14px; text-align: center; border-radius: 15px; background: rgba(255,255,255,.11); font-size: 18px; font-weight: 800; }.formula b { color: #9fc4ff; font-size: 26px; }
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 28px; }
+    .flow-step { min-height: 146px; padding: 17px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+    .flow-step b { display: block; margin-bottom: 8px; color: var(--blue); font-size: 12px; }.flow-step strong { display: block; line-height: 1.36; font-size: 16px; }.flow-step span { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .arrow { color: var(--blue); font-size: 24px; font-weight: 300; }
+    .feature { position: relative; overflow: hidden; min-height: 0; }
+    .feature .tag { display: inline-block; padding: 4px 9px; border-radius: 999px; background: var(--blue-pale); color: var(--blue); font-size: 12px; font-weight: 800; }.feature h3 { margin: 13px 0 7px; font-size: 23px; }.feature p { max-width: 100%; }
+    .mini-phone { position: relative; right: auto; bottom: auto; width: 178px; margin: 24px auto 0; padding: 16px 12px 88px; border: 6px solid #1f2d47; border-radius: 27px; background: #fff; box-shadow: 0 12px 24px rgba(17,38,71,.17); transform: rotate(4deg); }
+    .mini-phone::before { content: ""; display: block; width: 52px; height: 7px; margin: 0 auto 14px; border-radius: 9px; background: #1f2d47; }.mini-phone .bar { height: 9px; margin: 8px 0; border-radius: 8px; background: #e6ebf2; }.mini-phone .bar.dark { background: #316fe0; width: 74%; }.mini-phone .pin { display: grid; place-items: center; height: 76px; margin-top: 9px; border-radius: 12px; background: #dff7ed; color: #12835f; font-size: 28px; }.mini-phone .pill { margin-top: 9px; padding: 7px; border-radius: 9px; background: #fff0ec; color: #ad4a36; font-size: 10px; font-weight: 800; }
+    .feature:nth-child(2) .mini-phone { transform: rotate(-3deg); }.feature:nth-child(2) .pin { background: #e9f0ff; color: #2166dc; }.feature:nth-child(3) .pin { background: #fff3c9; color: #976c00; }
+    .two-col { display: grid; grid-template-columns: .9fr 1.1fr; gap: 32px; align-items: center; }
+    .map-sketch { position: relative; min-height: 330px; overflow: hidden; border-radius: 28px; background: #dff1e4; border: 1px solid #c6e2cf; }
+    .road { position: absolute; background: #fff; transform: rotate(-22deg); }.road.one { top: 102px; left: -20px; width: 520px; height: 18px; }.road.two { top: 176px; left: 8px; width: 520px; height: 14px; transform: rotate(18deg); }.road.three { top: 0; left: 242px; width: 17px; height: 360px; transform: rotate(12deg); }
+    .map-label { position: absolute; top: 20px; left: 20px; z-index: 2; padding: 7px 10px; border-radius: 10px; background: rgba(255,255,255,.9); font-size: 13px; font-weight: 800; }.pin-dot { position: absolute; z-index: 2; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50% 50% 50% 0; background: var(--blue); color: white; transform: rotate(-45deg); box-shadow: 0 5px 10px rgba(33,102,220,.22); }.pin-dot span { transform: rotate(45deg); font-size: 16px; }.pin-dot.a { top: 95px; left: 62%; }.pin-dot.b { top: 190px; left: 31%; background: #ef7b63; }.pin-dot.c { top: 218px; right: 19%; background: #23a27a; }
+    .map-copy ul { padding: 0; margin: 20px 0 0; list-style: none; }.map-copy li { display: flex; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }.map-copy li b { color: var(--blue); }
+    .example-grid { grid-template-columns: repeat(5, 1fr); }.example { min-height: 202px; }.example:nth-child(1) { background: var(--blue-pale); }.example:nth-child(2) { background: var(--mint); }.example:nth-child(3) { background: var(--coral); }.example:nth-child(4) { background: var(--yellow); }.example:nth-child(5) { background: #efeaff; }.example .icon { font-size: 26px; }.example h3 { margin: 17px 0 8px; font-size: 16px; }.example p { font-size: 12px; }
+    .compare { width: 100%; overflow: hidden; border-collapse: separate; border-spacing: 0; border: 1px solid var(--line); border-radius: 22px; background: white; }.compare th, .compare td { padding: 15px 16px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; vertical-align: top; }.compare th { background: #f8faff; color: #526078; font-size: 12px; }.compare tr:last-child td { border-bottom: none; }.compare td:last-child { background: #f0f5ff; font-weight: 700; }.compare th:last-child { background: #dce9ff; color: #174aab; }
+    .next { padding: 38px; border-radius: 28px; color: white; background: var(--ink); }.next h2 { max-width: 540px; }.next-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 26px; }.next-item { padding: 18px; border: 1px solid rgba(255,255,255,.2); border-radius: 16px; }.next-item b { display: block; color: #a9c7ff; font-size: 12px; }.next-item p { margin: 8px 0 0; font-size: 14px; line-height: 1.55; }
+    .references { padding: 64px 0 88px; }.reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }.reference-card { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: white; }.reference-card iframe { display: block; width: 100%; height: 900px; border: 0; background: #e8edf4; }.reference-card p { margin: 0; padding: 12px 14px; color: var(--muted); font-size: 13px; }
+    footer { padding: 28px 0 42px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .note { margin-top: 24px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 800px) { .hero { padding-top: 48px; }.hero-grid, .two-col { grid-template-columns: 1fr; gap: 28px; }.scene { min-height: 270px; }.problem-grid, .feature-grid { grid-template-columns: 1fr; }.formula { grid-template-columns: 1fr; gap: 7px; }.formula b { transform: rotate(90deg); text-align: center; }.flow { grid-template-columns: 1fr; gap: 7px; }.arrow { transform: rotate(90deg); text-align: center; }.flow-step { min-height: 0; }.example-grid { grid-template-columns: 1fr 1fr; }.next-grid, .reference-grid { grid-template-columns: 1fr; }.reference-card iframe { height: 900px; } nav { display: none; } section { padding: 56px 0; } }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><div class="brand">くらしマップ <span style="color:#8a96a8">／企画概要</span></div><nav aria-label="ページ内リンク"><a href="#idea">アイデア</a><a href="#experience">体験</a><a href="#difference">差別化</a><a href="#next">次に決めること</a></nav></div></header>
+  <main>
+    <section class="hero"><div class="wrap hero-grid"><div><span class="eyebrow">案01：くらしマップ</span><h1>自分では気づけない、<br><em>暮らしに必要なこと</em>が<br>見つかる。</h1><p class="lead">くらしマップは、地域・家族・時期に合わせて、制度や手続き、生活圏の情報を先回りして整理する。ホームではまず近くの便利な情報を地図で見せ、必要に応じて手続きや見守りまでつなげる。</p><p class="status">プロトタイプ作成済み　｜　制度条件・地域データ・情報連携は要検証</p></div><div class="scene" aria-label="くらしホームのイメージ"><div class="sun"></div><div class="home-card"><small>くらしマップ</small><strong>桜木町駅周辺<br>今日知っておくと便利なこと 4件</strong><p>資源ごみ・土曜診療・一時保育・土曜開庁</p></div><div class="home-card" style="margin-top:12px; width:64%; margin-left:22px"><small>くらし予報</small><strong style="font-size:15px">10月：児童手当の申請期限</strong></div><div class="city"><span></span><span></span><span></span><span></span></div><div class="house"></div></div></div></section>
+
+    <section id="idea"><div class="wrap"><p class="section-label">IDEA</p><h2>「調べる前の困りごと」に、<br>先回りする。</h2><p class="section-intro">生活に関わる情報は、知っている人だけが検索できる。くらしマップは、情報を並べるのではなく、ユーザーの状況に合わせて「今、行動する価値があること」を見つける。</p><div class="problem-grid"><article class="card"><span class="num">01</span><h3>知らないと、探せない</h3><p>制度変更、申請期限、地域ルールは、必要な人ほど存在に気づきにくい。</p></article><article class="card"><span class="num">02</span><h3>情報は、暮らしの外に散らばる</h3><p>自治体、行政、地域施設、季節情報を横断しないと、次の行動が見えない。</p></article><article class="card"><span class="num">03</span><h3>分かっても、続かない</h3><p>手続きや期限を知るだけでは終わらない。進捗や変更も継続して確認したい。</p></article></div></div></section>
+
+    <section style="padding-top:0"><div class="wrap"><div class="formula"><div>いま<br><small>期限・季節・制度変更</small></div><b>×</b><div>あなた<br><small>くらしの設定・家族・予定</small></div><b>×</b><div>この地域<br><small>自治体・生活圏・現在地</small></div></div><p class="note">ホームに出す情報は、上の3つを掛け合わせて選ぶ。全員に同じニュースを見せるのではなく、関係があり、行動につながるものを優先する。</p></div></section>
+
+    <section id="experience"><div class="wrap"><p class="section-label">EXPERIENCE</p><h2>ホームから地図へ。<br>必要なら、手続きと見守りへ。</h2><p class="section-intro">ホームの主役は、生活圏の便利な情報を示す「くらしマップ」のカード。小さなカード、カテゴリ、くらし予報を並べ、相談や手続きが必要なときは個別の画面へ進む。</p><div class="flow" aria-label="制度・支援の基本導線"><div class="flow-step"><b>1. ホーム</b><strong>地図カードとテーマ別カード</strong><span>くらしマップ、ふるさと納税、対象かも、ごみの日</span></div><div class="arrow" aria-hidden="true">→</div><div class="flow-step"><b>2. あなた向けの整理</b><strong>設定を根拠にした結果</strong><span>条件・金額目安・期限・出典を確認する</span></div><div class="arrow" aria-hidden="true">→</div><div class="flow-step"><b>3. やること</b><strong>必要な行動を3つに整理</strong><span>オンライン申請、窓口を地図で見る、提出状況</span></div><div class="arrow" aria-hidden="true">→</div><div class="flow-step"><b>4. 見守り</b><strong>期限と変更を継続確認</strong><span>タスク登録し、くらし予報にも反映する</span></div></div>
+      <div class="feature-grid" style="margin-top:34px"><article class="card feature"><span class="tag">入口</span><h3>地図カードが主役の<br>くらしホーム</h3><p>地域名と「今日知っておくと便利なこと」を大きく見せる。下には対象かも、テーマ別カード、カテゴリ、3か月の予報を置く。</p><div class="mini-phone"><div class="bar dark"></div><div class="pin">⌖</div><div class="pill">今日知っておくと便利なこと 4件</div><div class="bar"></div><div class="bar" style="width:68%"></div></div></article><article class="card feature"><span class="tag">場所</span><h3>くらしマップ</h3><p>医療、子育て、防災、ごみ、手続き、公共施設、回収を切り替える。地域と時間を基に「いま近くで使える場所」を出す。</p><div class="mini-phone"><div class="bar dark"></div><div class="pin">⌖</div><div class="pill">土曜午後も開いている小児科</div><div class="bar"></div><div class="bar" style="width:68%"></div></div></article><article class="card feature"><span class="tag">これから</span><h3>くらし予報<br>＋見守り</h3><p>ホームでは3か月、詳細では1年を時系列で見る。判定結果やタスク登録済みの予定は、由来を表示して積み上げる。</p><div class="mini-phone"><div class="bar dark"></div><div class="pin">◷</div><div class="pill">判定結果から追加</div><div class="bar"></div><div class="bar" style="width:68%"></div></div></article></div></div></section>
+
+    <section><div class="wrap two-col"><div class="map-sketch" aria-label="くらしマップのイメージ"><span class="map-label">桜木町駅周辺　今日知っておくと便利なこと 4件</span><i class="road one"></i><i class="road two"></i><i class="road three"></i><i class="pin-dot a"><span>♻</span></i><i class="pin-dot b"><span>＋</span></i><i class="pin-dot c"><span>⌂</span></i></div><div class="map-copy"><p class="section-label">KURASHI MAP</p><h2 style="font-size:clamp(28px,3.5vw,40px)">答えを、<br>場所と時間で返す。</h2><p class="section-intro">エリアを切り替え、時間帯に応じた「いま近くで使える場所」を出す。「日曜に子どもが発熱した」「粗大ごみを出したい」といった問いには、説明だけでなく場所・受付時間・次の行動を一緒に返す。</p><ul><li><b>ごみ</b><span>明日の収集、粗大ごみの持込先、分別の質問。データ準備中の地域では、ごみカレンダーを代替表示する。</span></li><li><b>医療・子育て</b><span>土曜診療、一時保育、地域の支援窓口を近い順に表示する。</span></li><li><b>防災・手続き</b><span>避難所、給水拠点、土曜開庁などをレイヤーで切り替える。</span></li></ul></div></div></section>
+
+    <section><div class="wrap"><p class="section-label">PROTOTYPE SCENES</p><h2>プロトタイプで具体化した<br>5つの体験。</h2><p class="section-intro">先回りのアイデアを、実際の画面と行動に落とした。初期検証では、地域・手続き・期限の3つを横断する体験に焦点を当てる。</p><div class="example-grid"><article class="card example"><div class="icon">⌖</div><h3>いま近くで使える場所</h3><p>土曜診療・一時保育・土曜開庁を、距離と時間帯で見つける。</p></article><article class="card example"><div class="icon">♻</div><h3>地域のごみ</h3><p>収集日、分別、粗大ごみを地図・カレンダー・質問で確認する。</p></article><article class="card example"><div class="icon">◎</div><h3>引っ越し後の手当</h3><p>設定を根拠に対象可能性、期限、申請のやることを整理する。</p></article><article class="card example"><div class="icon">¥</div><h3>ふるさと納税</h3><p>上限の目安、寄付状況、ワンストップ特例の提出を一続きにする。</p></article><article class="card example"><div class="icon">◷</div><h3>1年のくらし予報</h3><p>手続き、家族、時期、判定結果、タスクを同じ時間軸で見通す。</p></article></div></div></section>
+
+    <section id="difference"><div class="wrap"><p class="section-label">DIFFERENCE</p><h2>狙うのは、<br>「地域の深さ」と「能動性」の交点。</h2><p class="section-intro">汎用AIの相談力、自治体サービスの地域情報、それぞれの強みを踏まえつつ、日々の暮らしに必要な情報を自ら整理する体験を目指す。</p><div style="overflow-x:auto"><table class="compare"><thead><tr><th>比較観点</th><th>汎用AI</th><th>自治体アプリ・LINE</th><th>くらしマップ</th></tr></thead><tbody><tr><td>始まり方</td><td>ユーザーが質問する</td><td>自治体からのお知らせ</td><td>状況に応じてホームが変わる</td></tr><tr><td>地域の情報</td><td>広く答えられる</td><td>地域に深い</td><td>地域の情報を個人の状況につなぐ</td></tr><tr><td>次の行動</td><td>会話で案内</td><td>リンクや案内中心</td><td>対象可能性・やること・場所まで整理</td></tr><tr><td>継続性</td><td>ユーザーが依頼したテーマ</td><td>配信が中心</td><td>タスクで期限や変更を見守る</td></tr></tbody></table></div><p class="note">これは企画上のポジショニング仮説。各サービスの最新機能や実現性は、次の競合・技術調査で確認する。</p></div></section>
+
+    <section id="next"><div class="wrap"><div class="next"><p class="section-label" style="color:#a9c7ff">NEXT</p><h2>プロトタイプの次に、<br>検証すること。</h2><div class="next-grid"><div class="next-item"><b>01　地域データの届く範囲</b><p>ごみ、診療、窓口などを、どの地域・どの粒度で最新化できるか。準備中の地域の代替体験も含めて決める。</p></div><div class="next-item"><b>02　カードと予報の優先順位</b><p>地図カード、制度カード、くらし予報のうち、何をホームの一等地へ出すか。緊急度、期限、関係度、行動可能性で検証する。</p></div><div class="next-item"><b>03　設定・根拠の伝え方</b><p>地域、家族、できごと、年収目安をどこまで使うか。対象可能性と上限額の根拠・注意書きをどう説明するかを設計する。</p></div></div></div></div></section>
+
+    <section class="references"><div class="wrap"><p class="section-label">CURRENT PROTOTYPE</p><h2 style="font-size:clamp(27px,3.5vw,40px)">現在のプロトタイプ</h2><p class="section-intro">ここでは旧ラフ画像ではなく、現行プロトタイプのスマホ画面だけを表示している。画面内の制度条件や数値は検討用の例示。</p><p style="margin:0 0 28px"><a href="くらしマップ.html#HomeCard" style="display:inline-flex; align-items:center; gap:8px; padding:12px 18px; color:#fff; background:#17243d; border-radius:999px; text-decoration:none; font-size:14px; font-weight:800">プロトタイプを開く <span aria-hidden="true">→</span></a></p><div class="reference-grid"><figure class="reference-card"><iframe src="くらしマップ.html?embed=1&amp;preview=3#HomeCard" title="現行プロトタイプ：くらしホーム"></iframe><figcaption><p>くらしホーム：くらしマップの地図カードを主役に、テーマ別カードとくらし予報を配置。</p></figcaption></figure><figure class="reference-card"><iframe src="くらしマップ.html?embed=1&amp;preview=3#Main" title="現行プロトタイプ：くらしマップ"></iframe><figcaption><p>くらしマップ：地域・時間・カテゴリに応じて、近くで使える場所を表示。</p></figcaption></figure><figure class="reference-card"><iframe src="くらしマップ.html?embed=1&amp;preview=3#CategoryProcedures" title="現行プロトタイプ：行政手続きカテゴリ"></iframe><figcaption><p>行政手続き：ホームのカテゴリから、あなた向け・時期・場所で必要な情報を整理。</p></figcaption></figure><figure class="reference-card"><iframe src="くらしマップ.html?embed=1&amp;preview=3#FurusatoCheck" title="現行プロトタイプ：ふるさと納税"></iframe><figcaption><p>ふるさと納税：上限目安、寄付状況、手続きの流れを一続きにする。</p></figcaption></figure></div></div></section>
+  </main>
+  <footer><div class="wrap">くらしマップ／企画アイデアの説明用HTML　｜　現行プロトタイプと検討中のラフワイヤーを基に更新</div></footer>
+</body>
+</html>

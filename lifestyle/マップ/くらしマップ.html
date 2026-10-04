@@ -1,0 +1,1554 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>くらし領域プロトタイプ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone-sized device centered on a quiet desk; a slim control bar above it. Single light look (monochrome wireframe), chosen on purpose. */
+:root{
+  --desk:#E6E8EB; --ink:#111111; --muted:#5B6068; --line:#C9CDD3; --device:#FFFFFF; --accent:#0B1F5C;
+  --font:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;
+  color-scheme: light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:var(--font);overflow:hidden}
+*{box-sizing:border-box}
+.app{height:100%;display:flex;flex-direction:column;align-items:center;padding:12px 16px 16px;gap:10px}
+.bar{width:100%;max-width:560px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.bar h1{margin:0;font-size:13px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.bar select{font:inherit;font-size:13px;max-width:100%;min-width:0;flex:1 1 220px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--device);color:var(--ink);padding:0 8px}
+.bar button{font:inherit;font-size:13px;height:34px;padding:0 12px;border:1px solid var(--ink);border-radius:17px;background:var(--device);color:var(--ink);cursor:pointer}
+.bar :focus-visible,.device a:focus-visible,.device button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stage{flex:1;min-height:0;width:100%;display:flex;justify-content:center;align-items:flex-start}
+.device{position:relative;width:390px;border-radius:28px;background:var(--device);box-shadow:0 0 0 1px rgba(0,0,0,.08),0 12px 40px rgba(17,17,17,.18);overflow:hidden;transform-origin:top center}
+.embed-mode .app{padding:0;gap:0}.embed-mode .bar{display:none}.embed-mode .stage{width:100%}.embed-mode .device{border-radius:0;box-shadow:none}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen a{color:#111;text-decoration:none}
+.screen button{font-family:inherit;color:#111;background:none;border:0;padding:0;cursor:pointer}
+.screen svg{display:block}
+.screen > div{font-family:var(--font) !important}
+.toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:#111;color:#fff;font-size:13px;padding:8px 14px;border-radius:18px;white-space:nowrap;pointer-events:none;z-index:20}
+.menu{position:absolute;z-index:15;background:#fff;border:1.5px solid #111;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);padding:4px;display:flex;flex-direction:column;min-width:200px}
+.menu button{font-family:var(--font);font-size:14px;text-align:left;padding:10px 12px;border-radius:8px;background:none;border:0;color:#111;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.menu button[aria-checked="true"]{font-weight:700}
+.menu button:hover{background:#F1F2F4}
+[role="slider"]{cursor:pointer;touch-action:none}
+@media (max-width:440px){
+  .app{padding:8px 0 0;gap:6px}
+  .bar{padding:0 16px}
+  .bar h1{display:none}
+  .device{border-radius:0;box-shadow:none}
+}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .18s ease-out}@keyframes in{from{opacity:.4}to{opacity:1}}}
+</style>
+
+<script>if(location.search.indexOf('embed=1')>=0)document.documentElement.classList.add('embed-mode');</script>
+
+<div class="app">
+  <div class="bar">
+    <h1>くらし領域 プロトタイプ</h1>
+    <label for="jump" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">画面を選ぶ</label>
+    <select id="jump"><optgroup label="ホーム"><option value="HomeCard">B-0 ホーム（地図カード→くらしマップ／くらし予報の入口）</option></optgroup><optgroup label="A 地域情報（くらしマップ）"><option value="Main">A-1 くらしマップ（地図）</option><option value="RadarDetail">A-2 暮らし情報の詳細</option><option value="RadarAsk">A-3 Agentへの質問から地図表示</option><option value="RadarToday">A-4 今日知っておくと便利なこと（ホームのカードから）</option><option value="RadarGomi">A-5 ごみレイヤーを選んだとき</option><option value="RadarGomiNoData">A-6 ごみレイヤー（データ準備中の地域）</option></optgroup><optgroup label="B 制度・支援"><option value="Settings">B-1 くらしの設定（歯車から）</option><option value="CheckResult">B-2 判定結果</option><option value="Todo">B-3 やること</option><option value="Forecast">B-4 くらし予報</option><option value="CategoryProcedures">B-5 カテゴリ（例：行政手続き）</option><option value="CategoryMoney">B-6 カテゴリ（税・お金）</option></optgroup><optgroup label="C ふるさと納税"><option value="FurusatoCheck">C-1 今年のふるさと納税（ホームのカードから）</option><option value="FurusatoTodo">C-2 やること（ワンストップ特例）</option><option value="FurusatoRecord">C-3 今年の寄付と申請書の状況</option></optgroup></select>
+    <button id="restart" type="button">ホームから</button>
+  </div>
+  <div class="stage" id="stage">
+    <div class="device" id="device">
+<section class="screen" id="HomeCard" aria-label="B-0 ホーム（地図カード→くらしマップ／くらし予報の入口）" hidden>
+<div style="width: 390px; height: 1040px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <button aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700"><span style="width: 24px; height: 24px; border-radius: 12px; background: #DDE0E4"></span>くらし</div>
+    <a href="#Settings" aria-label="設定" style="width: 44px; height: 44px; margin-right: -10px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F5C" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5l1.6 2.6 3-.8.8 3 2.6 1.6-1.4 2.6 1.4 2.6-2.6 1.6-.8 3-3-.8L12 21.5l-1.6-2.6-3 .8-.8-3-2.6-1.6 1.4-2.6-1.4-2.6 2.6-1.6.8-3 3 .8z"></path></svg></a>
+  </div>
+
+  <!-- map card: replaces the carousel, opens くらしマップ -->
+  <a href="#Main" aria-label="くらしマップを開く" style="margin: 4px 16px 16px; height: 196px; flex-shrink: 0; border-radius: 12px; border: 1.5px solid #111; overflow: hidden; position: relative; background: #EEF0F2; display: block">
+    <div style="position: absolute; left: -20px; top: 70px; width: 420px; height: 16px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 104px; height: 10px; background: #FFF"></div>
+    <div style="position: absolute; left: 170px; top: 0; bottom: 0; width: 10px; background: #FFF"></div>
+    <div style="position: absolute; left: 52px; top: 0; bottom: 0; width: 6px; background: #FFF"></div>
+    <div style="position: absolute; left: 290px; top: 0; bottom: 0; width: 6px; background: #FFF"></div>
+    <div style="position: absolute; left: 160px; top: 92px; width: 30px; height: 30px; border-radius: 15px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 12px; height: 12px; border-radius: 6px; background: #0B1F5C; border: 2px solid #FFF"></div></div>
+    <div style="position: absolute; left: 70px; top: 52px; width: 28px; height: 28px; border-radius: 14px; background: #111; border: 2px solid #FFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div><div style="position: absolute; left: 232px; top: 44px; width: 28px; height: 28px; border-radius: 14px; background: #111; border: 2px solid #FFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"></path></svg></div><div style="position: absolute; left: 96px; top: 120px; width: 28px; height: 28px; border-radius: 14px; background: #111; border: 2px solid #FFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"></circle><path d="M6 21v-4a6 6 0 0 1 12 0v4"></path></svg></div><div style="position: absolute; left: 262px; top: 116px; width: 28px; height: 28px; border-radius: 14px; background: #111; border: 2px solid #FFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg></div>
+    <span style="position: absolute; top: 10px; left: 10px; background: #FFF; border: 1px solid #111; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700">桜木町駅周辺</span>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: #FFF; border-top: 1px solid #DADDE1; display: flex; align-items: center; justify-content: space-between; padding: 0 12px">
+      <span style="font-size: 14px; font-weight: 700">今日知っておくと便利なこと 4件</span>
+      <span style="display: flex; align-items: center; gap: 2px; font-size: 12px; color: #555">くらしマップ<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></span>
+    </div>
+  </a>
+
+  <div style="display: flex; gap: 9px; padding-left: 16px; flex-shrink: 0">
+    <a href="#FurusatoCheck" style="width: 121px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="height: 90px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+      <div style="padding: 8px 8px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1">
+        <div style="font-size: 14px; font-weight: 700; line-height: 1.35">今年のふるさと納税確認</div>
+        <div style="font-size: 12px; color: #333; line-height: 1.4">12月が近づいています</div>
+        <div style="flex: 1"></div>
+        <span style="align-self: flex-start; font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">上限額の目安あり</span>
+      </div>
+    </a>
+    <a href="#CheckResult" style="width: 121px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="height: 90px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+      <div style="padding: 8px 8px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1">
+        <div style="font-size: 14px; font-weight: 700; line-height: 1.35">子育ての手当、申請もれはない？</div>
+        <div style="font-size: 12px; color: #333; line-height: 1.4">引っ越し後は再申請が必要</div>
+        <div style="flex: 1"></div>
+        <span style="align-self: flex-start; font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">対象かも</span>
+      </div>
+    </a>
+    <a href="#RadarToday" style="width: 121px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+      <div style="height: 90px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+      <div style="padding: 8px 8px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1">
+        <div style="font-size: 14px; font-weight: 700; line-height: 1.35">明日は資源ごみの日</div>
+        <div style="font-size: 12px; color: #333; line-height: 1.4">ペットボトル・缶・びん</div>
+      </div>
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 16px 16px 0">
+    <div style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>ごみ・地域</div>
+    <a href="#CategoryProcedures" style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>行政手続き</a>
+    <a href="#CategoryMoney" style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>税・お金</a>
+    <div style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>住まい</div>
+    <div style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>支援制度</div>
+    <div style="height: 40px; border: 1.5px solid #111; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 6px; font-size: 13px; font-weight: 700"><span style="width: 26px; height: 26px; border-radius: 13px; background: #DDE0E4"></span>防災</div>
+  </div>
+
+  <a href="#Forecast" style="margin: 16px 16px 0; flex-shrink: 0; border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+      <span style="font-size: 15px; font-weight: 700">くらし予報</span>
+      <span style="flex: 1; font-size: 13px; color: #555">これからの3か月</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+    </div>
+    <div style="position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <div style="position: absolute; left: 6px; right: 6px; top: 5px; height: 1.5px; background: #C8CCD1"></div>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 4px">
+        <span style="width: 12px; height: 12px; border-radius: 6px; background: #111"></span>
+        <span style="font-size: 13px; font-weight: 700">10月</span>
+        <span style="font-size: 12px; line-height: 1.4; color: #333">児童手当の申請期限</span>
+      </div>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 4px">
+        <span style="width: 12px; height: 12px; border-radius: 6px; background: #FFF; border: 1.5px solid #111"></span>
+        <span style="font-size: 13px; font-weight: 700">11月</span>
+        <span style="font-size: 12px; line-height: 1.4; color: #333">保育園 4月入園の申込</span>
+      </div>
+      <div style="position: relative; display: flex; flex-direction: column; gap: 4px">
+        <span style="width: 12px; height: 12px; border-radius: 6px; background: #FFF; border: 1.5px solid #111"></span>
+        <span style="font-size: 13px; font-weight: 700">12月</span>
+        <span style="font-size: 12px; line-height: 1.4; color: #333">ふるさと納税の締切</span>
+      </div>
+    </div>
+  </a>
+
+  <div style="padding: 8px 16px 0; flex-shrink: 0">
+    <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">ふるさと納税の基本を知りたい<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+    <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">新こどもNISAについて<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="Main" aria-label="A-1 くらしマップ（地図）" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <nav aria-label="カテゴリ" style="height: 44px; flex-shrink: 0; display: flex; align-items: stretch; gap: 18px; padding: 0 16px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #E3E5E8">
+    <a href="#Main" aria-current="page" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; color: #111; border-bottom: 2.5px solid #0B1F5C">すべて</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">医療</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">子育て</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">防災</a>
+    <a href="#RadarGomi" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">ごみ</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">手続き</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">公共施設</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">回収</a>
+  </nav>
+
+  <div style="flex: 1; position: relative; overflow: hidden; background: #EEF0F2">
+    <!-- map -->
+    <div style="position: absolute; left: -30px; top: 150px; width: 460px; height: 24px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; top: 296px; width: 390px; height: 14px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 0; top: 470px; width: 390px; height: 10px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 204px; top: 0; width: 14px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 60px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 330px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 90px; top: 210px; width: 330px; height: 9px; background: #FFFFFF; transform: rotate(24deg)"></div>
+    <div style="position: absolute; left: 82px; top: 336px; width: 108px; height: 110px; border-radius: 10px; background: #E1E5E8; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 10px; color: #8A9097">〇〇公園</div>
+    <div style="position: absolute; left: 232px; top: 320px; width: 86px; height: 60px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 80px; top: 230px; width: 110px; height: 52px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 232px; top: 216px; width: 86px; height: 64px; border-radius: 6px; background: #E6E9EC"></div>
+
+    <!-- current location -->
+    <div style="position: absolute; left: 187px; top: 168px; width: 48px; height: 48px; border-radius: 24px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 16px; height: 16px; border-radius: 8px; background: #0B1F5C; border: 3px solid #FFFFFF"></div></div>
+
+    <!-- minor pins -->
+    <div style="position: absolute; left: 150px; top: 110px; width: 32px; height: 32px; border-radius: 16px; background: #FFFFFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path></svg></div>
+    <div style="position: absolute; left: 344px; top: 130px; width: 32px; height: 32px; border-radius: 16px; background: #FFFFFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></div>
+    <div style="position: absolute; left: 190px; top: 258px; width: 32px; height: 32px; border-radius: 16px; background: #FFFFFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2"></path></svg></div>
+
+    <!-- today pins -->
+    <div style="position: absolute; left: 40px; top: 90px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">明日 資源ごみ</div>
+    </div>
+    <a href="#RadarDetail" style="position: absolute; left: 252px; top: 84px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linejoin="round"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">土曜も診療</div>
+    </a>
+    <div style="position: absolute; left: 270px; top: 214px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">土曜開庁</div>
+    </div>
+    <div style="position: absolute; left: 70px; top: 214px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"></circle><path d="M6 21v-4a6 6 0 0 1 12 0v4"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">一時保育</div>
+    </div>
+
+    <!-- area dropdown (登録地域・現在地など) -->
+    <button aria-label="見る地域を変える" style="position: absolute; top: 10px; left: 16px; height: 34px; padding: 0 10px 0 12px; border-radius: 17px; background: #FFF; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap">桜木町駅周辺<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+
+
+
+
+
+    <!-- time slider (0-23時, thumb = now) -->
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 316px; background: #FFF; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.14); padding: 10px 16px 6px; display: flex; flex-direction: column; gap: 4px">
+      <div role="slider" aria-label="時間" aria-valuemin="0" aria-valuemax="23" aria-valuenow="14" aria-valuetext="14時" tabindex="0" style="position: relative; height: 18px; display: flex; align-items: center">
+        <div style="position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: #DDE0E4"></div>
+        <div style="position: absolute; left: calc(60.9% - 9px); width: 18px; height: 18px; border-radius: 9px; background: #111; border: 3px solid #FFF; box-shadow: 0 0 0 1px #111"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #8A9097">
+        <span>0</span><span>6</span><span>12</span><span>18</span><span>23</span>
+      </div>
+    </div>
+
+
+    <!-- sheet -->
+    <div id="today" style="position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #FFF; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 14px rgba(0,0,0,0.10); padding: 8px 16px 12px; display: flex; flex-direction: column">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #C8CCD1; align-self: center; margin-bottom: 10px"></div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px">
+        <div style="font-size: 16px; font-weight: 700">いま近くで使える場所</div>
+        <span style="font-size: 13px; color: #555">近い順</span>
+      </div>
+      <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #E3E5E8">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="3"></circle><path d="M6 21v-4a6 6 0 0 1 12 0v4"></path></svg></div>
+        <div style="flex: 1; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">600m</span><span style="font-size: 15px; font-weight: 700">一時保育</span></div>
+          <div style="font-size: 13px; color: #555; margin-top: 2px">〇〇子育て支援センター｜空きは電話で確認</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+      <a href="#RadarDetail" style="display: flex; align-items: center; gap: 12px; padding: 10px 0">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"></path></svg></div>
+        <div style="flex: 1; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">1.2km</span><span style="font-size: 15px; font-weight: 700">土曜午後も開いている小児科</span></div>
+          <div style="font-size: 13px; color: #555; margin-top: 2px">〇〇こどもクリニック｜17時まで受付</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+      <div style="flex: 1"></div>
+      <a href="#RadarAsk" style="display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">この辺のことを聞いてください</span>
+        <span aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></span>
+      </a>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" id="RadarDetail" aria-label="A-2 暮らし情報の詳細" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#Main" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 18px; font-weight: 700">くらしマップ</div>
+    <a href="#Settings" aria-label="設定" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F5C" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5l1.6 2.6 3-.8.8 3 2.6 1.6-1.4 2.6 1.4 2.6-2.6 1.6-.8 3-3-.8L12 21.5l-1.6-2.6-3 .8-.8-3-2.6-1.6 1.4-2.6-1.4-2.6 2.6-1.6.8-3 3 .8z"></path></svg></a>
+  </div>
+
+  <nav aria-label="カテゴリ" style="height: 44px; flex-shrink: 0; display: flex; align-items: stretch; gap: 18px; padding: 0 16px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #E3E5E8">
+    <a href="#Main" aria-current="page" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; color: #111; border-bottom: 2.5px solid #0B1F5C">すべて</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">医療</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">子育て</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">防災</a>
+    <a href="#RadarGomi" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">ごみ</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">手続き</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">公共施設</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">回収</a>
+  </nav>
+
+  <div style="flex: 1; position: relative; overflow: hidden; background: #EEF0F2">
+    <!-- map (centered on selected place) -->
+    <div style="position: absolute; left: -30px; top: 60px; width: 460px; height: 22px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; top: 176px; width: 390px; height: 14px; background: #FFF"></div>
+    <div style="position: absolute; left: 150px; top: 0; width: 14px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 40px; top: 0; width: 8px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 300px; top: 0; width: 8px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 180px; top: 200px; width: 100px; height: 40px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 60px; top: 100px; width: 80px; height: 60px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 190px; top: 260px; width: 90px; height: 50px; border-radius: 6px; background: #E6E9EC"></div>
+
+    <!-- route -->
+    <div style="position: absolute; left: 94px; top: 252px; width: 215px; height: 0; border-top: 2px dashed #111; transform: rotate(-48deg); transform-origin: left center"></div>
+    <div style="position: absolute; left: 72px; top: 230px; width: 44px; height: 44px; border-radius: 22px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 16px; height: 16px; border-radius: 8px; background: #0B1F5C; border: 3px solid #FFF"></div></div>
+
+    <!-- dimmed other pins -->
+    <div style="position: absolute; left: 30px; top: 30px; width: 30px; height: 30px; border-radius: 15px; background: #FFF; border: 1.5px solid #9AA0A6; opacity: 0.7"></div>
+    <div style="position: absolute; left: 320px; top: 200px; width: 30px; height: 30px; border-radius: 15px; background: #FFF; border: 1.5px solid #9AA0A6; opacity: 0.7"></div>
+
+    <!-- selected pin -->
+    <div style="position: absolute; left: 214px; top: 68px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 48px; height: 48px; border-radius: 24px; background: #111; border: 3px solid #FFF; box-shadow: 0 0 0 1.5px #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linejoin="round"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"></path></svg></div>
+      <div style="background: #111; color: #FFF; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; white-space: nowrap">土曜も診療</div>
+    </div>
+
+    <!-- bottom sheet (half; swipe up for more) -->
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 410px; background: #FFF; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 14px rgba(0,0,0,0.12); padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 12px">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #C8CCD1; align-self: center; flex-shrink: 0"></div>
+
+      <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: flex-start; gap: 8px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">17時まで</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">医療</span></div>
+            <h1 style="margin: 0; font-size: 20px; font-weight: 700; line-height: 1.35">〇〇こどもクリニック</h1>
+            <div style="font-size: 13px; color: #444">土曜 9:00〜12:00／14:00〜17:00｜小児科｜1.2km（徒歩15分）</div>
+            <div style="font-size: 11px; color: #6B7078">出典：医療情報ネット（厚生労働省）｜10月1日時点</div>
+          </div>
+          <a href="#Main" aria-label="閉じる" style="width: 36px; height: 36px; border-radius: 18px; background: #F1F2F4; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-shrink: 0">
+          <a href="#" data-todo style="flex: 1; height: 44px; border-radius: 22px; background: #111; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">経路を見る</a>
+          <a href="#" data-todo style="flex: 1; height: 44px; border-radius: 22px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500">電話する</a>
+        </div>
+
+        <div style="flex-shrink: 0">
+          <a href="#" data-todo style="height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">子どもの発熱、受診の目安は？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+          <a href="#" data-todo style="height: 52px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">近くで日曜に開いている薬局は？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+        </div>
+
+        <div style="flex-shrink: 0; background: #F1F2F4; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 13px; font-weight: 700">受診前に知っておくと便利</div>
+          <div style="font-size: 13px; line-height: 1.6; color: #333">土曜午後は混み合うことも。出発前に電話で確認を。保険証（マイナ保険証）とお薬手帳を持参しましょう</div>
+        </div>
+
+        <a href="#" data-todo style="flex-shrink: 0; border: 1.5px solid #111; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          <div style="flex: 1">
+            <div style="font-size: 12px; color: #555">17時以降はこちら</div>
+            <div style="font-size: 14px; font-weight: 700">〇〇市 夜間小児救急（19時〜）</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+        <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">この場所についてAgentに相談</div>
+        <a href="#RadarAsk" aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" id="RadarAsk" aria-label="A-3 Agentへの質問から地図表示" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#Main" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 18px; font-weight: 700">くらしマップ</div>
+    <a href="#Settings" aria-label="設定" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F5C" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5l1.6 2.6 3-.8.8 3 2.6 1.6-1.4 2.6 1.4 2.6-2.6 1.6-.8 3-3-.8L12 21.5l-1.6-2.6-3 .8-.8-3-2.6-1.6 1.4-2.6-1.4-2.6 2.6-1.6.8-3 3 .8z"></path></svg></a>
+  </div>
+
+  <nav aria-label="カテゴリ" style="height: 44px; flex-shrink: 0; display: flex; align-items: stretch; gap: 18px; padding: 0 16px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #E3E5E8">
+    <a href="#Main" aria-current="page" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; color: #111; border-bottom: 2.5px solid #0B1F5C">すべて</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">医療</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">子育て</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">防災</a>
+    <a href="#RadarGomi" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">ごみ</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">手続き</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">公共施設</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">回収</a>
+  </nav>
+
+  <div style="flex: 1; position: relative; overflow: hidden; background: #EEF0F2">
+    <div style="position: absolute; left: -30px; top: 120px; width: 460px; height: 22px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; top: 230px; width: 390px; height: 14px; background: #FFF"></div>
+    <div style="position: absolute; left: 204px; top: 0; width: 14px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 60px; top: 0; width: 8px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 330px; top: 0; width: 8px; height: 740px; background: #FFF"></div>
+    <div style="position: absolute; left: 80px; top: 160px; width: 110px; height: 56px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 232px; top: 254px; width: 86px; height: 50px; border-radius: 6px; background: #E6E9EC"></div>
+
+    <div style="position: absolute; left: 187px; top: 213px; width: 48px; height: 48px; border-radius: 24px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 16px; height: 16px; border-radius: 8px; background: #0B1F5C; border: 3px solid #FFF"></div></div>
+
+    <div style="position: absolute; left: 254px; top: 160px; width: 34px; height: 34px; border-radius: 17px; background: #111; color: #FFF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFF">1</div>
+    <div style="position: absolute; left: 96px; top: 252px; width: 34px; height: 34px; border-radius: 17px; background: #111; box-shadow: 0 0 0 4px rgba(17,17,17,0.18); color: #FFF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFF">2</div>
+    <div style="position: absolute; left: 300px; top: 82px; width: 34px; height: 34px; border-radius: 17px; background: #111; color: #FFF; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFF">3</div>
+
+    <div style="position: absolute; top: 10px; left: 16px; right: 16px; display: flex; align-items: center; gap: 8px; background: #FFF; border: 1.5px solid #111; border-radius: 999px; height: 44px; padding: 0 6px 0 14px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
+      <div style="flex: 1; font-size: 14px; font-weight: 500">乾電池の回収場所 3件を表示中</div>
+      <a href="#Main" aria-label="表示を解除" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+    </div>
+
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 420px; background: #FFF; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 14px rgba(0,0,0,0.10); padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 10px">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #C8CCD1; align-self: center"></div>
+      <div style="align-self: flex-end; background: #F1F2F4; border-radius: 18px 18px 4px 18px; padding: 8px 14px; font-size: 15px">乾電池どこで捨てられる？</div>
+      <div style="font-size: 15px; line-height: 1.65">近くに回収ボックスが3か所あります。今日（土曜）出せるのは②の図書館です。①の市役所は平日のみなので、月曜以降に。</div>
+
+      <div style="display: flex; flex-direction: column">
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #E3E5E8">
+          <span style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: #111; color: #FFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">〇〇市役所 1階 回収ボックス</div><div style="font-size: 13px; color: #555">徒歩6分｜平日 8:30〜17:15（今日は休み）</div></div>
+        </a>
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #E3E5E8">
+          <span style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: #111; color: #FFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">〇〇図書館 入口</div><div style="font-size: 13px; color: #555">徒歩9分｜土日も可</div></div><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 2px 6px">今日OK</span>
+        </a>
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 9px 0">
+          <span style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 13px; background: #111; color: #FFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">家電量販店 〇〇店</div><div style="font-size: 13px; color: #555">徒歩12分｜充電式電池もOK</div></div>
+        </a>
+      </div>
+
+      <div style="flex: 1"></div>
+      <div style="display: flex; gap: 8px; overflow: hidden">
+        <a href="#" data-todo style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">次の有害ごみの日は？</a>
+        <a href="#" data-todo style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">蛍光灯も出せる？</a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+        <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" id="RadarGomi" aria-label="A-5 ごみレイヤーを選んだとき" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#Main" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 18px; font-weight: 700">くらしマップ</div>
+    <a href="#Settings" aria-label="設定" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F5C" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5l1.6 2.6 3-.8.8 3 2.6 1.6-1.4 2.6 1.4 2.6-2.6 1.6-.8 3-3-.8L12 21.5l-1.6-2.6-3 .8-.8-3-2.6-1.6 1.4-2.6-1.4-2.6 2.6-1.6.8-3 3 .8z"></path></svg></a>
+  </div>
+
+  <nav aria-label="カテゴリ" style="height: 44px; flex-shrink: 0; display: flex; align-items: stretch; gap: 18px; padding: 0 16px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #E3E5E8">
+    <a href="#Main" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">すべて</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">医療</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">子育て</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">防災</a>
+    <a href="#RadarGomi" aria-current="page" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; color: #111; border-bottom: 2.5px solid #0B1F5C">ごみ</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">手続き</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">公共施設</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">回収</a>
+  </nav>
+
+  <div style="flex: 1; position: relative; overflow: hidden; background: #EEF0F2">
+    <!-- map -->
+    <div style="position: absolute; left: -30px; top: 150px; width: 460px; height: 24px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; top: 296px; width: 390px; height: 14px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 0; top: 470px; width: 390px; height: 10px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 204px; top: 0; width: 14px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 60px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 330px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 90px; top: 210px; width: 330px; height: 9px; background: #FFFFFF; transform: rotate(24deg)"></div>
+    <div style="position: absolute; left: 232px; top: 216px; width: 86px; height: 64px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 80px; top: 230px; width: 110px; height: 52px; border-radius: 6px; background: #E6E9EC"></div>
+
+    <!-- current location -->
+    <div style="position: absolute; left: 187px; top: 168px; width: 48px; height: 48px; border-radius: 24px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 16px; height: 16px; border-radius: 8px; background: #0B1F5C; border: 3px solid #FFFFFF"></div></div>
+
+    <!-- collection places (white = いつでも出せる回収場所) -->
+    <div style="position: absolute; left: 66px; top: 220px; display: flex; flex-direction: column; align-items: center; gap: 3px">
+      <div style="width: 32px; height: 32px; border-radius: 16px; background: #FFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M10 18h4"></path></svg></div>
+      <div style="background: #FFF; border-radius: 999px; padding: 0 6px; font-size: 10px; font-weight: 700; white-space: nowrap">小型家電</div>
+    </div>
+    <div style="position: absolute; left: 150px; top: 250px; display: flex; flex-direction: column; align-items: center; gap: 3px">
+      <div style="width: 32px; height: 32px; border-radius: 16px; background: #FFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M8 3l4 3 4-3 5 4-3 4h-2v10H8V11H6L3 7z"></path></svg></div>
+      <div style="background: #FFF; border-radius: 999px; padding: 0 6px; font-size: 10px; font-weight: 700; white-space: nowrap">古着</div>
+    </div>
+    <div style="position: absolute; left: 300px; top: 196px; display: flex; flex-direction: column; align-items: center; gap: 3px">
+      <div style="width: 32px; height: 32px; border-radius: 16px; background: #FFF; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><rect x="3" y="8" width="16" height="8" rx="2"></rect><path d="M21 11v2"></path></svg></div>
+      <div style="background: #FFF; border-radius: 999px; padding: 0 6px; font-size: 10px; font-weight: 700; white-space: nowrap">電池</div>
+    </div>
+
+    <!-- today / tomorrow (black) -->
+    <div style="position: absolute; left: 30px; top: 86px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">いつもの集積所</div>
+    </div>
+    <div style="position: absolute; left: 236px; top: 80px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <div style="width: 38px; height: 38px; border-radius: 19px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1"></rect><path d="M8 9V5h8v4"></path></svg></div>
+      <div style="background: #FFFFFF; border: 1px solid #111; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; white-space: nowrap">粗大ごみ持込</div>
+    </div>
+
+
+    <!-- area dropdown (登録地域・現在地など) -->
+    <button aria-label="見る地域を変える" style="position: absolute; top: 10px; left: 16px; height: 34px; padding: 0 10px 0 12px; border-radius: 17px; background: #FFF; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap">桜木町駅周辺<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+
+
+    <!-- time slider (0-23時, thumb = now) -->
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 316px; background: #FFF; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.14); padding: 10px 16px 6px; display: flex; flex-direction: column; gap: 4px">
+      <div role="slider" aria-label="時間" aria-valuemin="0" aria-valuemax="23" aria-valuenow="14" aria-valuetext="14時" tabindex="0" style="position: relative; height: 18px; display: flex; align-items: center">
+        <div style="position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: #DDE0E4"></div>
+        <div style="position: absolute; left: calc(60.9% - 9px); width: 18px; height: 18px; border-radius: 9px; background: #111; border: 3px solid #FFF; box-shadow: 0 0 0 1px #111"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #8A9097">
+        <span>0</span><span>6</span><span>12</span><span>18</span><span>23</span>
+      </div>
+    </div>
+
+    <!-- sheet -->
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #FFF; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 14px rgba(0,0,0,0.10); padding: 8px 16px 12px; display: flex; flex-direction: column">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #C8CCD1; align-self: center; margin-bottom: 10px"></div>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px">
+        <div style="font-size: 16px; font-weight: 700">〇〇町の収集日</div>
+        <a href="#" data-todo style="font-size: 13px; color: #555">分別一覧</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+        <div style="background: #F1F2F4; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">月</span><span style="font-size: 11px; font-weight: 700;">燃やす</span></div>
+        <div style="background: #F1F2F4; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">火</span><span style="font-size: 11px; font-weight: 700;">プラ</span></div>
+        <div style="background: #F1F2F4; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">水</span><span style="font-size: 11px; font-weight: 700; color: #9AA0A6;">—</span></div>
+        <div style="background: #F1F2F4; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">木</span><span style="font-size: 11px; font-weight: 700;">燃やす</span></div>
+        <div style="background: #F1F2F4; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">金</span><span style="font-size: 11px; font-weight: 700;">不燃</span></div>
+        <div style="border: 1.5px solid #111; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #555;">土</span><span style="font-size: 11px; font-weight: 700; color: #9AA0A6;">—</span></div>
+        <div style="background: #111; color: #FFF; border-radius: 8px; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-size: 11px; color: #FFF;">日</span><span style="font-size: 11px; font-weight: 700;">資源</span></div>
+      </div>
+      <div style="font-size: 13px; color: #333; margin-top: 10px">明日は<b>資源ごみ</b>（ペットボトル・缶・びん）｜朝8時まで</div>
+      <div style="font-size: 11px; color: #6B7078; margin-top: 4px">出典：〇〇市｜10月1日時点</div>
+      <div style="display: flex; gap: 8px; overflow: hidden; margin-top: 12px">
+        <a href="#RadarAsk" style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">スプレー缶はどう出す？</a>
+        <a href="#RadarAsk" style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">粗大ごみを出したい</a>
+        <a href="#RadarAsk" style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">傘は何ごみ？</a>
+      </div>
+      <div style="flex: 1"></div>
+      <a href="#RadarAsk" style="display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">これは何ごみ？と聞いてください</span>
+        <span aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></span>
+      </a>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" id="RadarGomiNoData" aria-label="A-6 ごみレイヤー（データ準備中の地域）" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#Main" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 18px; font-weight: 700">くらしマップ</div>
+    <a href="#Settings" aria-label="設定" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F5C" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.5l1.6 2.6 3-.8.8 3 2.6 1.6-1.4 2.6 1.4 2.6-2.6 1.6-.8 3-3-.8L12 21.5l-1.6-2.6-3 .8-.8-3-2.6-1.6 1.4-2.6-1.4-2.6 2.6-1.6.8-3 3 .8z"></path></svg></a>
+  </div>
+
+  <nav aria-label="カテゴリ" style="height: 44px; flex-shrink: 0; display: flex; align-items: stretch; gap: 18px; padding: 0 16px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #E3E5E8">
+    <a href="#Main" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">すべて</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">医療</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">子育て</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">防災</a>
+    <a href="#RadarGomi" aria-current="page" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 700; color: #111; border-bottom: 2.5px solid #0B1F5C">ごみ</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">手続き</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">公共施設</a>
+    <a href="#" data-todo style="flex-shrink: 0; display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 500; color: #555; border-bottom: 2.5px solid transparent">回収</a>
+  </nav>
+
+  <div style="flex: 1; position: relative; overflow: hidden; background: #EEF0F2">
+    <!-- map (no garbage data in this area: no pins) -->
+    <div style="position: absolute; left: -30px; top: 150px; width: 460px; height: 24px; background: #DCE1E6; transform: rotate(-8deg)"></div>
+    <div style="position: absolute; left: 0; top: 296px; width: 390px; height: 14px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 204px; top: 0; width: 14px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 60px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 330px; top: 0; width: 8px; height: 740px; background: #FFFFFF"></div>
+    <div style="position: absolute; left: 90px; top: 210px; width: 330px; height: 9px; background: #FFFFFF; transform: rotate(24deg)"></div>
+    <div style="position: absolute; left: 232px; top: 216px; width: 86px; height: 64px; border-radius: 6px; background: #E6E9EC"></div>
+    <div style="position: absolute; left: 80px; top: 230px; width: 110px; height: 52px; border-radius: 6px; background: #E6E9EC"></div>
+
+    <div style="position: absolute; left: 276px; top: 112px; width: 48px; height: 48px; border-radius: 24px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 16px; height: 16px; border-radius: 8px; background: #0B1F5C; border: 3px solid #FFFFFF"></div></div>
+
+
+    <!-- area dropdown (登録地域・現在地など) -->
+    <button aria-label="見る地域を変える" style="position: absolute; top: 10px; left: 16px; height: 34px; padding: 0 10px 0 12px; border-radius: 17px; background: #FFF; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap">桜木町駅周辺<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+
+
+    <!-- time slider -->
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 486px; background: #FFF; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.14); padding: 10px 16px 6px; display: flex; flex-direction: column; gap: 4px">
+      <div role="slider" aria-label="時間" aria-valuemin="0" aria-valuemax="23" aria-valuenow="14" aria-valuetext="14時" tabindex="0" style="position: relative; height: 18px; display: flex; align-items: center">
+        <div style="position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: #DDE0E4"></div>
+        <div style="position: absolute; left: calc(60.9% - 9px); width: 18px; height: 18px; border-radius: 9px; background: #111; border: 3px solid #FFF; box-shadow: 0 0 0 1px #111"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #8A9097">
+        <span>0</span><span>6</span><span>12</span><span>18</span><span>23</span>
+      </div>
+    </div>
+
+    <!-- sheet: no structured data → Agent reads the official page -->
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 470px; background: #FFF; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 14px rgba(0,0,0,0.10); padding: 8px 16px 12px; display: flex; flex-direction: column">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #C8CCD1; align-self: center; margin-bottom: 10px"></div>
+      <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px">△△町の収集日</div>
+      <div style="font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 10px">この地域のデータは取得できないため、Agentが△△町の公式ページを調べました。</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; margin-bottom: 2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>公式ページによると</div>
+        <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #E3E5E8; font-size: 14px"><span style="width: 84px; flex-shrink: 0; color: #555">燃やすごみ</span><span style="font-weight: 700">毎週 月・木</span></div>
+        <div style="display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #E3E5E8; font-size: 14px"><span style="width: 84px; flex-shrink: 0; color: #555">資源ごみ</span><span style="font-weight: 700">第2・第4 水曜</span></div>
+        <div style="display: flex; gap: 12px; padding: 6px 0; font-size: 14px"><span style="width: 84px; flex-shrink: 0; color: #555">不燃ごみ</span><span style="font-weight: 700">第1 金曜</span></div>
+        <div style="font-size: 11px; color: #6B7078; line-height: 1.5; margin-top: 4px">出典：△△町 ごみカレンダー（PDF）｜地区によって異なる場合があります</div>
+        <a href="#" data-todo style="align-self: flex-start; height: 34px; padding: 0 12px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; margin-top: 4px">公式ページで確かめる<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"></path></svg></a>
+      </div>
+      <div style="display: flex; gap: 8px; overflow: hidden; margin-top: 12px">
+        <a href="#RadarAsk" style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">次の燃やすごみはいつ？</a>
+        <a href="#RadarAsk" style="flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px">傘は何ごみ？</a>
+      </div>
+      <div style="flex: 1"></div>
+      <a href="#RadarAsk" style="display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">これは何ごみ？と聞いてください</span>
+        <span aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></span>
+      </a>
+    </div>
+  </div>
+</div>
+</section>
+<section class="screen" id="RadarToday" aria-label="A-4 今日知っておくと便利なこと（ホームのカードから）" hidden>
+<div style="width: 390px; height: 1080px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">この辺のくらし</div>
+    <a href="#Main" aria-label="地図で見る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg></a>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="font-size: 13px; color: #555">〇〇市〇〇町 付近｜10月3日（土）</div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700">今日知っておくと便利なこと 4件</h1>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 14px; font-weight: 700; color: #555">今日</div>
+
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 12px">
+          <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linejoin="round"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"></path></svg></div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">17時まで</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">医療</span></div>
+            <div style="font-size: 16px; font-weight: 700">土曜午後も開いている小児科</div>
+            <div style="font-size: 13px; color: #444">〇〇こどもクリニック｜小児科｜1.2km</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <a href="#Main" style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">地図で見る</a>
+          <a href="#RadarDetail" style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">詳しく見る</a>
+        </div>
+      </div>
+
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 12px">
+          <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg></div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">17時まで</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">手続き</span></div>
+            <div style="font-size: 16px; font-weight: 700">土日も開いている窓口</div>
+            <div style="font-size: 13px; color: #444">〇〇駅前サービスコーナー｜住民票・マイナンバーカード｜1.5km</div>
+          </div>
+        </div>
+        <div style="font-size: 13px; line-height: 1.6; background: #F1F2F4; border-radius: 8px; padding: 8px 10px">児童手当の申請もここでできます（期限 10/15）</div>
+        <div style="display: flex; gap: 8px">
+          <a href="#Main" style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">地図で見る</a>
+          <a href="#Todo" style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">やることを見る</a>
+        </div>
+      </div>
+
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 12px">
+          <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="3"></circle><path d="M6 21v-4a6 6 0 0 1 12 0v4"></path></svg></div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">要予約</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">子育て</span></div>
+            <div style="font-size: 16px; font-weight: 700">一時保育</div>
+            <div style="font-size: 13px; color: #444">〇〇子育て支援センター｜空きは電話で確認｜600m</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <a href="#Main" style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">地図で見る</a>
+          <a href="#" data-todo style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500">電話で予約</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 14px; font-weight: 700; color: #555">明日</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">朝8時まで</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">ごみ</span></div>
+          <div style="font-size: 16px; font-weight: 700">資源ごみの日</div>
+          <div style="font-size: 13px; color: #444">ペットボトル・缶・びん｜いつもの集積所（徒歩2分）</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 11px; color: #6B7078; margin-top: -8px">出典：〇〇市・医療情報ネット ほか｜10月3日 14:00時点</div>
+
+    <a href="#Forecast" style="display: flex; align-items: center; gap: 10px; background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+      <div style="flex: 1; font-size: 14px">この先の予定は<b>くらし予報</b>で</div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+    </a>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">この辺のことを聞いてください</div>
+    <a href="#RadarAsk" aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+  </div>
+</div>
+</section>
+<section class="screen" id="Settings" aria-label="B-1 くらしの設定（歯車から）" hidden>
+<div style="width: 390px; height: 1104px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="height: 44px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700"><span style="width: 24px; height: 24px; border-radius: 12px; background: #DDE0E4"></span>くらしの設定</div>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700; line-height: 1.45">あなたに関係ある情報を<br>見つけやすくします</h1>
+      <div style="font-size: 14px; color: #444; line-height: 1.6">入力はどれも任意です。入れた分だけ、制度や手続きのお知らせが具体的になります。</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 700">住まい</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+        <a href="#" data-todo style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid #DADDE1">
+          <span style="flex: 1; font-size: 15px">住んでいる地域</span><span style="font-size: 14px; color: #444">〇〇市〇〇町</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="#" data-todo style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px">
+          <span style="flex: 1; font-size: 15px">住まいの種類</span><span style="font-size: 14px; color: #444">賃貸</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 700">一緒に暮らす家族</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-wrap: wrap; gap: 8px">
+        <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #F1F2F4; display: flex; align-items: center; font-size: 14px">配偶者</span>
+        <span style="height: 36px; padding: 0 14px; border-radius: 18px; background: #F1F2F4; display: flex; align-items: center; font-size: 14px">子ども（0〜2歳）</span>
+        <button style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px dashed #111; display: flex; align-items: center; gap: 4px; font-size: 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>追加</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 700">最近のできごと・予定</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+        <a href="#" data-todo style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid #DADDE1">
+          <span style="flex: 1; font-size: 15px">引っ越し</span><span style="font-size: 14px; color: #444">2026年9月</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <button style="width: 100%; min-height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 15px; text-align: left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>出産・入学・就職・退職などを追加</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 700">働き方</div>
+      <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+        <a href="#" data-todo style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid #DADDE1">
+          <span style="flex: 1; font-size: 15px">年収の目安</span><span style="font-size: 14px; color: #444">[〇〇〇]万円</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="#" data-todo style="min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px">
+          <span style="flex: 1; font-size: 15px">働き方</span><span style="font-size: 14px; color: #444">会社員</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </div>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+      <div style="min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 10px 14px">
+        <div style="flex: 1"><div style="font-size: 15px">現在地を使う</div><div style="font-size: 12px; color: #555">くらしマップで周辺の情報を表示</div></div>
+        <button role="switch" aria-checked="true" aria-label="現在地を使う" style="width: 52px; height: 32px; border-radius: 16px; background: #111; padding: 3px; display: flex; justify-content: flex-end"><span style="width: 26px; height: 26px; border-radius: 13px; background: #FFF"></span></button>
+      </div>
+    </div>
+
+    <div style="font-size: 12px; color: #555; line-height: 1.7">入力した情報は、Agent iがあなたに合う情報を探すためだけに使います。いつでも変更・削除できます。</div>
+  </div>
+</div>
+</section>
+<section class="screen" id="CheckResult" aria-label="B-2 判定結果" hidden>
+<div style="width: 390px; height: 1040px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 8px 0 4px">
+      <div style="width: 56px; height: 56px; border-radius: 28px; border: 2px solid #111; display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></div>
+      <div style="font-size: 13px; font-weight: 700; color: #555">子育ての手当（児童手当）</div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700; line-height: 1.4">対象になる<br>可能性があります</h1>
+      <div style="font-size: 15px; line-height: 1.65; color: #333">別の市区町村から引っ越した場合、<br>新しい住所で申請し直す必要があります</div>
+    </div>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+      <div style="padding: 14px 16px; border-bottom: 1px solid #DADDE1; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12px; color: #555">金額の目安</div>
+        <div style="font-size: 20px; font-weight: 700">月 15,000円</div>
+        <div style="font-size: 13px; color: #444">3歳未満のお子さん1人あたり。2か月分ずつ支給</div>
+      </div>
+      <div style="padding: 14px 16px; border-bottom: 1px solid #DADDE1; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12px; color: #555">期限</div>
+        <div style="font-size: 17px; font-weight: 700">転入した日の翌日から15日以内</div>
+        <div style="font-size: 13px; color: #444">過ぎると、受け取れない月が出ることがあります</div>
+      </div>
+      <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12px; color: #555">対象の条件</div>
+        <div style="font-size: 14px; line-height: 1.6">高校生年代までのお子さんを育てていて、〇〇市に住んでいること（所得制限なし）</div>
+      </div>
+    </div>
+
+    <a href="#Settings" style="display: flex; align-items: center; gap: 10px; background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+      <div style="flex: 1">
+        <div style="font-size: 12px; color: #555">くらしの設定から判定しました</div>
+        <div style="font-size: 14px">〇〇市／子ども 0〜2歳／9月に転入</div>
+      </div>
+      <span style="font-size: 13px; text-decoration: underline">変更</span>
+    </a>
+
+    <div style="font-size: 12px; color: #555; line-height: 1.6">この結果は目安です。最終的な判断は〇〇市が行います。<br>出典：こども家庭庁・〇〇市｜10月1日時点</div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <a href="#Todo" style="height: 52px; border-radius: 26px; background: #111; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700">やることを確認する</a>
+    </div>
+
+    <div>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">支給日はいつ？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">ほかに引っ越しで必要な手続きは？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="Todo" aria-label="B-3 やること" hidden>
+<div style="width: 390px; height: 1180px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#CheckResult" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">やること</div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 13px; font-weight: 700; color: #555">子育ての手当（児童手当）｜引っ越し</div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700">やることは3つです</h1>
+      <div style="display: flex; align-items: center; gap: 10px; background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        <div style="flex: 1; font-size: 15px"><b>10月15日（木）</b>までに申請</div>
+        <span style="font-size: 13px; font-weight: 700; background: #111; color: #FFF; border-radius: 999px; padding: 2px 10px">あと12日</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span>
+          <span style="flex: 1; width: 1.5px; background: #C8CCD1"></span>
+        </div>
+        <div style="flex: 1; padding-bottom: 20px; display: flex; flex-direction: column; gap: 6px">
+          <div style="font-size: 16px; font-weight: 700; line-height: 1.75">必要なものを用意する</div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">・申請する人の本人確認書類<br>・マイナンバーがわかるもの<br>・申請する人名義の振込口座</div>
+          <div style="font-size: 12px; color: #555">目安 10分</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+          <span style="flex: 1; width: 1.5px; background: #C8CCD1"></span>
+        </div>
+        <div style="flex: 1; padding-bottom: 20px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 16px; font-weight: 700; line-height: 1.75">〇〇市で申請する</div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">オンライン（マイナポータル）か、市役所の窓口で申請できます</div>
+          <div style="display: flex; gap: 8px">
+            <a href="#" data-todo style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px; font-weight: 500">オンラインで申請</a>
+            <a href="#Main" style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>窓口を地図で見る</a>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="font-size: 16px; font-weight: 700; line-height: 1.75">支給を確認する</div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">申請した翌月分から。偶数月（2・4・6・8・10・12月）に2か月分ずつ振り込まれます</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 40px; height: 40px; border-radius: 20px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
+        <div style="font-size: 16px; font-weight: 700">Agent iに見守ってもらう</div>
+      </div>
+      <div style="font-size: 14px; line-height: 1.7; color: #333">タスクに登録すると、Agent iが継続的に確認します</div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>期限が近づいたらお知らせ</div>
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>〇〇市の窓口・受付時間の変更</div>
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>制度の改正や支給日の最新情報</div>
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; padding: 10px 0 2px; border-top: 1px solid #DADDE1; font-size: 14px"><input type="checkbox" checked="checked" style="width: 20px; height: 20px; accent-color: #111; margin: 0">くらし予報にも反映する</label>
+      <button style="height: 52px; border-radius: 26px; background: #111; color: #FFF; font-size: 16px; font-weight: 700">タスクに登録する</button>
+    </div>
+
+    <a href="#Forecast" style="align-self: center; display: flex; align-items: center; gap: 4px; font-size: 14px; padding: 10px; text-decoration: underline">くらし予報で今後の予定を見る<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></a>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="Forecast" aria-label="B-4 くらし予報" hidden>
+<div style="width: 390px; height: 1400px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#Todo" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">くらし予報</div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700">これからの1年、<br>あなたに関係すること</h1>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555">〇〇市｜家族3人（0〜2歳のお子さん）<a href="#Settings" style="text-decoration: underline; color: #333">変更</a></div>
+    </div>
+    <div role="group" aria-label="表示期間" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #F1F2F4; border-radius: 10px; padding: 3px; height: 40px">
+      <button style="border-radius: 8px; font-size: 14px; color: #555">3か月</button>
+      <button aria-pressed="true" style="border-radius: 8px; background: #FFF; border: 1px solid #111; font-size: 14px; font-weight: 700">1年</button>
+    </div>
+  </div>
+
+  <div style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 22px">
+
+    <div style="display: flex; gap: 12px">
+      <div style="width: 52px; flex-shrink: 0"><div style="font-size: 20px; font-weight: 700">10月</div><div style="font-size: 12px; color: #555">今月</div></div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <a href="#Todo" style="border: 2px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">判定結果から追加</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">タスク登録済み</span></div>
+          <div style="font-size: 15px; font-weight: 700">10/15 児童手当の申請期限</div>
+          <div style="font-size: 13px; color: #555">あと12日｜やることを見る</div>
+        </a>
+        
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <div style="width: 52px; flex-shrink: 0; font-size: 20px; font-weight: 700">11月</div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">家族</span></div>
+          <div style="font-size: 15px; font-weight: 700">保育園 4月入園の申込</div>
+          <div style="font-size: 13px; color: #555">〇〇市の受付時期の目安。見学は早めに</div>
+        </div>
+        <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">時期</span></div>
+          <div style="font-size: 15px; font-weight: 700">年末調整の書類提出</div>
+          <div style="font-size: 13px; color: #555">勤務先から案内が届きます</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <div style="width: 52px; flex-shrink: 0; font-size: 20px; font-weight: 700">12月</div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">判定結果から追加</span></div>
+          <div style="font-size: 15px; font-weight: 700">児童手当 初回の振込（予定）</div>
+          <div style="font-size: 13px; color: #555">10月中に申請した場合</div>
+        </div>
+        <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">時期</span></div>
+          <div style="font-size: 15px; font-weight: 700">12/31 ふるさと納税の締切</div>
+          <div style="font-size: 13px; color: #555">今年分の寄付はここまで</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <div style="width: 52px; flex-shrink: 0; font-size: 20px; font-weight: 700; line-height: 1.3">2〜<br>3月</div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="border: 1.5px solid #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">時期</span></div>
+          <div style="font-size: 15px; font-weight: 700">確定申告（2/16〜3/15）</div>
+          <div style="font-size: 13px; color: #555">医療費が多かった年は医療費控除も</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 12px">
+      <div style="width: 52px; flex-shrink: 0; font-size: 20px; font-weight: 700">来春</div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+        <div style="border: 1.5px dashed #111; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">家族</span></div>
+          <div style="font-size: 15px; font-weight: 700">4月 入園・慣らし保育</div>
+          <div style="font-size: 13px; color: #555">申込の結果によって表示が変わります</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #F1F2F4; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 13px; color: #444; line-height: 1.6">くらしの設定（地域・家族構成・できごと）と時期から作っています</div>
+      <a href="#Settings" style="font-size: 14px; font-weight: 700; text-decoration: underline">くらしの設定を更新する</a>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="CategoryProcedures" aria-label="B-5 カテゴリ（例：行政手続き）" hidden>
+<div style="width: 390px; height: 1160px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 24px">
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700">あなたに必要そうな手続き</h2>
+        <span style="font-size: 12px; color: #555">9月に転入</span>
+      </div>
+      <a href="#Todo" style="border: 2px solid #111; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">期限 10/15</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">オンライン可</span></div>
+          <div style="font-size: 16px; font-weight: 700">児童手当の申請</div>
+          <div style="font-size: 13px; color: #555">引っ越し後は新しい住所で申請し直し</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+      <a href="#" data-todo style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 16px; font-weight: 700">引っ越し後の手続き</div>
+            <div style="font-size: 13px; color: #555">6件中4件 完了</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px">
+          <span style="height: 6px; border-radius: 3px; background: #111"></span>
+          <span style="height: 6px; border-radius: 3px; background: #111"></span>
+          <span style="height: 6px; border-radius: 3px; background: #111"></span>
+          <span style="height: 6px; border-radius: 3px; background: #111"></span>
+          <span style="height: 6px; border-radius: 3px; background: #DDE0E4"></span>
+          <span style="height: 6px; border-radius: 3px; background: #DDE0E4"></span>
+        </div>
+        <div style="font-size: 13px; color: #333">残り：児童手当の申請／運転免許証の住所変更</div>
+      </a>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">この時期の手続き</h2>
+      <div style="display: flex; flex-direction: column">
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E3E5E8">
+          <span style="width: 44px; flex-shrink: 0; font-size: 13px; font-weight: 700">11月</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">年末調整の書類提出</div><div style="font-size: 13px; color: #555">勤務先から案内が届きます</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 12px 0">
+          <span style="width: 44px; flex-shrink: 0; font-size: 13px; font-weight: 700">11月</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">保育園 4月入園の申込</div><div style="font-size: 13px; color: #555">〇〇市の受付時期の目安</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">手続きできる場所</h2>
+      <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column">
+        <a href="#Main" style="height: 110px; position: relative; background: #EEF0F2; display: block">
+          <div style="position: absolute; left: 0; right: 0; top: 58px; height: 10px; background: #FFF"></div>
+          <div style="position: absolute; left: 150px; top: 0; bottom: 0; width: 10px; background: #FFF"></div>
+          <div style="position: absolute; left: 260px; top: 0; bottom: 0; width: 7px; background: #FFF"></div>
+          <div style="position: absolute; left: 140px; top: 48px; width: 30px; height: 30px; border-radius: 15px; background: rgba(11,31,92,0.12); display: flex; align-items: center; justify-content: center"><div style="width: 12px; height: 12px; border-radius: 6px; background: #0B1F5C; border: 2px solid #FFF"></div></div>
+          <div style="position: absolute; left: 70px; top: 20px; width: 26px; height: 26px; border-radius: 13px; background: #111; border: 1.5px solid #111; color: #FFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</div><div style="position: absolute; left: 214px; top: 70px; width: 26px; height: 26px; border-radius: 13px; background: #FFF; border: 1.5px solid #111; color: #111; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</div><div style="position: absolute; left: 300px; top: 18px; width: 26px; height: 26px; border-radius: 13px; background: #FFF; border: 1.5px solid #111; color: #111; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</div>
+          <span style="position: absolute; right: 8px; bottom: 8px; background: #FFF; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700">地図で見る</span>
+        </a>
+          <a href="#" data-todo style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #E3E5E8;">
+            <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: #111; border: 1.5px solid #111; color: #FFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span>
+            <div style="flex: 1"><div style="font-size: 14px; font-weight: 700">〇〇駅前サービスコーナー</div><div style="font-size: 12px; color: #555">1.5km｜土日も 17時まで</div></div>
+            <span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px; white-space: nowrap">今日開庁</span>
+          </a>
+          <a href="#" data-todo style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #E3E5E8;">
+            <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: #FFF; border: 1.5px solid #111; color: #111; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+            <div style="flex: 1"><div style="font-size: 14px; font-weight: 700">〇〇市役所 〇〇出張所</div><div style="font-size: 12px; color: #555">800m｜次は月曜 8:30から</div></div>
+            
+          </a>
+          <a href="#" data-todo style="display: flex; align-items: center; gap: 10px; padding: 10px 14px;">
+            <span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 11px; background: #FFF; border: 1.5px solid #111; color: #111; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span>
+            <div style="flex: 1"><div style="font-size: 14px; font-weight: 700">〇〇市役所（本庁）</div><div style="font-size: 12px; color: #555">2.4km｜次は月曜 8:30から</div></div>
+            
+          </a>
+      </div>
+      <a href="#" data-todo style="background: #F1F2F4; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><path d="M10 18h4"></path></svg>
+        <div style="flex: 1; font-size: 14px"><b>オンライン・コンビニ</b>でできる手続き</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </section>
+
+    <div>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">住民票をコンビニで取るには？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">マイナンバーカードの住所変更は？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">手続きについて聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="CategoryMoney" aria-label="B-6 カテゴリ（税・お金）" hidden>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">税・お金</div>
+    <div style="width: 44px"></div>
+  </div>
+
+  <div style="padding: 8px 16px 0; display: flex; flex-direction: column; gap: 24px">
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 700">あなたに関係ありそうなこと</h2>
+        <span style="font-size: 12px; color: #555">会社員・9月に転入</span>
+      </div>
+      <a href="#FurusatoCheck" style="border: 2px solid #111; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 1px 6px">12/31まで</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">寄付先 2/5</span></div>
+          <div style="font-size: 16px; font-weight: 700">今年のふるさと納税</div>
+          <div style="font-size: 13px; color: #555">上限の目安まで あと約[〇〇,000]円</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+      <a href="#" data-todo style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; gap: 6px"><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">引っ越した年</span></div>
+          <div style="font-size: 16px; font-weight: 700">今年度の住民税は前の市区町村へ</div>
+          <div style="font-size: 13px; color: #555; line-height: 1.5">住民税は1月1日時点の住所で決まります。〇〇市での課税は来年度から</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">この時期のこと</h2>
+      <div style="display: flex; flex-direction: column">
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E3E5E8">
+          <span style="width: 52px; flex-shrink: 0; font-size: 13px; font-weight: 700">10月</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">保険料の控除証明書が届く</div><div style="font-size: 13px; color: #555">年末調整で使うので保管を</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E3E5E8">
+          <span style="width: 52px; flex-shrink: 0; font-size: 13px; font-weight: 700">11月</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">年末調整の書類提出</div><div style="font-size: 13px; color: #555">勤務先から案内が届きます</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <a href="#" data-todo style="display: flex; align-items: center; gap: 12px; padding: 12px 0">
+          <span style="width: 52px; flex-shrink: 0; font-size: 13px; font-weight: 700; line-height: 1.3">2〜3月</span>
+          <div style="flex: 1"><div style="font-size: 15px; font-weight: 700">確定申告（2/16〜3/15）</div><div style="font-size: 13px; color: #555">医療費が多かった年は医療費控除も</div></div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 700">相談・手続きできる場所</h2>
+      <a href="#Main" style="border: 1.5px solid #111; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+        <div style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg></div>
+        <div style="flex: 1">
+          <div style="font-size: 15px; font-weight: 700">〇〇税務署</div>
+          <div style="font-size: 13px; color: #555">2.1km｜平日 8:30〜17:00</div>
+        </div>
+        <span style="font-size: 13px; text-decoration: underline">地図で見る</span>
+      </a>
+      <a href="#" data-todo style="background: #F1F2F4; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><path d="M10 18h4"></path></svg>
+        <div style="flex: 1; font-size: 14px"><b>スマホ</b>でできる申告・手続き</div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+      </a>
+    </section>
+
+    <div>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">医療費控除の対象になるものは？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">新こどもNISAについて<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">税金やお金のことを聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="FurusatoCheck" aria-label="C-1 今年のふるさと納税（ホームのカードから）" hidden>
+<div style="width: 390px; height: 1300px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#HomeCard" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 21px; font-weight: 700"><span style="letter-spacing: 0.21px">〇〇〇〇</span></div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700">今年のふるさと納税</h1>
+      <div style="display: flex; align-items: center; gap: 10px; background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        <div style="flex: 1; font-size: 15px">今年分の寄付は<b>12月31日</b>まで</div>
+        <span style="font-size: 13px; font-weight: 700; background: #111; color: #FFF; border-radius: 999px; padding: 2px 10px">あと89日</span>
+      </div>
+    </div>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 13px; color: #555">控除上限の目安まで</div>
+      <div style="font-size: 26px; font-weight: 700">あと 約 [〇〇,000]円</div>
+      <div style="height: 12px; border-radius: 6px; background: #E3E5E8; overflow: hidden; display: flex"><span style="width: 38%; background: #111"></span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #444"><span>寄付済み [〇〇,000]円</span><span>上限目安 [〇〇,000]円</span></div>
+      <a href="#FurusatoRecord" style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #DADDE1; font-size: 14px">今年の寄付 2件を見る<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></a>
+    </div>
+
+    <a href="#Settings" style="display: flex; align-items: center; gap: 10px; background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+      <div style="flex: 1">
+        <div style="font-size: 12px; color: #555">くらしの設定から計算しました</div>
+        <div style="font-size: 14px">会社員／配偶者・子ども（0〜2歳）／年収の目安 [〇〇〇]万円</div>
+      </div>
+      <span style="font-size: 13px; text-decoration: underline">変更</span>
+    </a>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; overflow: hidden">
+      <div style="padding: 14px 16px; border-bottom: 1px solid #DADDE1; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12px; color: #555">あなたの手続き</div>
+        <div style="font-size: 17px; font-weight: 700">ワンストップ特例が使えそうです</div>
+        <div style="font-size: 13px; color: #444; line-height: 1.6">確定申告をしない会社員で、寄付先が5自治体以内なら、確定申告なしで控除を受けられます</div>
+      </div>
+      <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 12px; color: #555">気をつけたいこと</div>
+        <div style="font-size: 14px; line-height: 1.6">今年、医療費控除などで確定申告をする場合は、ふるさと納税も確定申告でまとめて申告します</div>
+      </div>
+    </div>
+
+    <div style="font-size: 12px; color: #555; line-height: 1.6">上限額は目安です。実際の上限は年収や控除の内容で変わります。</div>
+
+    <a href="#FurusatoTodo" style="height: 52px; border-radius: 26px; background: #111; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700">やることを確認する</a>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 8px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <div style="font-size: 17px; font-weight: 700">人気の自治体の返礼品</div>
+        
+      </div>
+      <div style="display: flex; gap: 9px; margin-right: -16px; overflow: hidden">
+        <a href="#" data-todo style="width: 140px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+          <div style="height: 100px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+          <div style="padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 11px; color: #555">〇〇県△△町</div>
+            <div style="font-size: 14px; font-weight: 700; line-height: 1.35">お米 10kg</div>
+            <div style="font-size: 13px">[〇〇,000]円〜</div>
+          </div>
+        </a>
+        <a href="#" data-todo style="width: 140px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+          <div style="height: 100px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+          <div style="padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 11px; color: #555">〇〇県□□市</div>
+            <div style="font-size: 14px; font-weight: 700; line-height: 1.35">牛肉 切り落とし</div>
+            <div style="font-size: 13px">[〇〇,000]円〜</div>
+          </div>
+        </a>
+        <a href="#" data-todo style="width: 140px; flex-shrink: 0; border: 1.5px solid #111; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column">
+          <div style="height: 100px; background: #DDE0E4; display: flex; align-items: center; justify-content: center"><svg width="46" height="46" viewBox="0 0 100 100" fill="none" stroke="#F3F4F6" stroke-width="8"><rect x="4" y="4" width="92" height="92"></rect><path d="M4 4l92 92M96 4L4 96"></path></svg></div>
+          <div style="padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px">
+            <div style="font-size: 11px; color: #555">〇〇県☆☆村</div>
+            <div style="font-size: 14px; font-weight: 700; line-height: 1.35">季節のフルーツ</div>
+            <div style="font-size: 13px">[〇〇,000]円〜</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #DADDE1; font-size: 16px">ふるさと納税の基本を知りたい<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+      <a href="#" data-todo style="height: 56px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">引っ越した年でも大丈夫？<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></a>
+    </div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="FurusatoTodo" aria-label="C-2 やること（ワンストップ特例）" hidden>
+<div style="width: 390px; height: 1200px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#FurusatoCheck" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">やること</div>
+    <button aria-label="その他" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#555" stroke-width="2"><circle cx="5" cy="13" r="2.5"></circle><circle cx="13" cy="13" r="2.5"></circle><circle cx="21" cy="13" r="2.5"></circle></svg></button>
+  </div>
+
+  <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-size: 13px; font-weight: 700; color: #555">ふるさと納税｜ワンストップ特例</div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700">やることは3つです</h1>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">1</span>
+          <span style="flex: 1; width: 1.5px; background: #C8CCD1"></span>
+        </div>
+        <div style="flex: 1; padding-bottom: 20px; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 16px; font-weight: 700; line-height: 1.75">上限の範囲で寄付する</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">12/31まで</span></div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">あと約 [〇〇,000]円。寄付先は5自治体までにしておくと、確定申告がいりません</div>
+          <div style="font-size: 13px; color: #555">いまの寄付先 2 / 5自治体</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span>
+          <span style="flex: 1; width: 1.5px; background: #C8CCD1"></span>
+        </div>
+        <div style="flex: 1; padding-bottom: 20px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 16px; font-weight: 700; line-height: 1.75">申請書を各自治体に送る</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">1/10必着</span></div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">寄付した自治体ごとに、ワンストップ特例の申請書を送ります。オンラインで申請できる自治体もあります</div>
+          <a href="#FurusatoRecord" style="align-self: flex-start; height: 40px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #111; display: flex; align-items: center; font-size: 13px; font-weight: 500">提出状況を見る（1件 未提出）</a>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px">
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1.5px solid #111; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 16px; font-weight: 700; line-height: 1.75">住民税で控除を確認する</span><span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 1px 6px">来年6月ごろ</span></div>
+          <div style="font-size: 14px; line-height: 1.7; color: #333">勤務先から届く住民税の通知で、寄付した分が引かれているか確認します</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 1.5px dashed #111; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+      <div style="font-size: 14px; font-weight: 700">確定申告をする場合</div>
+      <div style="font-size: 13px; line-height: 1.6; color: #444">申請書は不要です。2/16〜3/15の確定申告で、寄付をまとめて申告します</div>
+    </div>
+
+    <div style="border: 1.5px solid #111; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 40px; height: 40px; border-radius: 20px; background: #F1F2F4; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></div>
+        <div style="font-size: 16px; font-weight: 700">Agent iに見守ってもらう</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px">
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>寄付が上限に近づいたらお知らせ</div>
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>6自治体目の寄付をする前に注意</div>
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>未提出の申請書と1/10の期限を確認</div>
+      </div>
+      <label style="display: flex; align-items: center; gap: 10px; padding: 10px 0 2px; border-top: 1px solid #DADDE1; font-size: 14px"><input type="checkbox" checked="checked" style="width: 20px; height: 20px; accent-color: #111; margin: 0">くらし予報にも反映する</label>
+      <button style="height: 52px; border-radius: 26px; background: #111; color: #FFF; font-size: 16px; font-weight: 700">タスクに登録する</button>
+    </div>
+
+    <a href="#Forecast" style="align-self: center; display: flex; align-items: center; gap: 4px; font-size: 14px; padding: 10px; text-decoration: underline">くらし予報で今後の予定を見る<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></a>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+<section class="screen" id="FurusatoRecord" aria-label="C-3 今年の寄付と申請書の状況" hidden>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Noto Sans JP', sans-serif; color: #111111">
+
+  <div style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px">
+    <a href="#FurusatoTodo" aria-label="戻る" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="font-size: 17px; font-weight: 700">今年の寄付</div>
+    <div style="width: 44px"></div>
+  </div>
+
+  <div style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <div style="background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+        <div style="font-size: 12px; color: #555">寄付先</div>
+        <div style="font-size: 20px; font-weight: 700">2 <span style="font-size: 14px; font-weight: 400">/ 5自治体</span></div>
+      </div>
+      <div style="background: #F1F2F4; border-radius: 12px; padding: 12px 14px">
+        <div style="font-size: 12px; color: #555">申請書</div>
+        <div style="font-size: 20px; font-weight: 700">1件 <span style="font-size: 14px; font-weight: 400">未提出</span></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="border: 2px solid #111; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: flex-start; gap: 10px">
+          <div style="flex: 1">
+            <div style="font-size: 16px; font-weight: 700">△△町</div>
+            <div style="font-size: 13px; color: #555">[〇〇,000]円｜9月寄付</div>
+          </div>
+          <span style="font-size: 11px; font-weight: 700; background: #111; color: #FFF; border-radius: 4px; padding: 2px 8px">申請書 未提出</span>
+        </div>
+        <div style="font-size: 13px; color: #444">1月10日必着。オンライン申請に対応しています</div>
+        <div style="display: flex; gap: 8px">
+          <a href="#" data-todo style="flex: 1; height: 40px; border-radius: 20px; background: #111; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">オンラインで申請</a>
+          <button style="flex: 1; height: 40px; border-radius: 20px; border: 1.5px solid #111; font-size: 13px; font-weight: 500">提出済みにする</button>
+        </div>
+      </div>
+
+      <div style="border: 1.5px solid #111; border-radius: 12px; padding: 14px; display: flex; align-items: flex-start; gap: 10px">
+        <div style="flex: 1">
+          <div style="font-size: 16px; font-weight: 700">〇〇市</div>
+          <div style="font-size: 13px; color: #555">[〇〇,000]円｜6月寄付</div>
+        </div>
+        <span style="font-size: 11px; font-weight: 700; background: #E3E5E8; border-radius: 4px; padding: 2px 8px">申請書 提出済み</span>
+      </div>
+
+      <button style="height: 52px; border-radius: 12px; border: 1.5px dashed #111; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>寄付を記録する</button>
+    </div>
+
+    <div style="font-size: 12px; color: #555; line-height: 1.6">寄付先が6自治体以上になると、ワンストップ特例は使えず確定申告が必要になります。</div>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div style="flex-shrink: 0; padding: 8px 8px 16px 8px; display: flex; align-items: center; gap: 8px">
+    <div style="flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #D5D8DC; display: flex; align-items: center; padding: 0 18px; font-size: 15px; color: #888">なんでも聞いてください</div>
+    <button aria-label="送信" style="width: 48px; height: 48px; border-radius: 24px; background: #111; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></button>
+  </div>
+</div>
+</section>
+      <div class="toast" id="toast" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var device=document.getElementById('device'), stage=document.getElementById('stage');
+  var embedMode=new URLSearchParams(location.search).has('embed');
+  if(embedMode) document.documentElement.classList.add('embed-mode');
+  var jump=document.getElementById('jump'), toast=document.getElementById('toast');
+  var screens=[].slice.call(device.querySelectorAll('.screen'));
+  var ids=screens.map(function(s){return s.id});
+  var current=null, timer=null;
+
+  function show(id){
+    if(ids.indexOf(id)<0) id='HomeCard';
+    screens.forEach(function(s){ s.hidden = s.id!==id; });
+    var s=document.getElementById(id); if(s) s.scrollTop=0;
+    current=id; jump.value=id; closeMenu();
+  }
+  function route(){ show((location.hash||'#HomeCard').slice(1)); }
+  window.addEventListener('hashchange',route);
+
+  jump.addEventListener('change',function(){ location.hash=jump.value; });
+  document.getElementById('restart').addEventListener('click',function(){ location.hash='HomeCard'; if(current==='HomeCard') show('HomeCard'); });
+
+  function say(msg){ toast.textContent=msg; toast.hidden=false; clearTimeout(timer); timer=setTimeout(function(){toast.hidden=true},1600); }
+
+  device.addEventListener('click',function(e){
+    var a=e.target.closest('a[data-todo]');
+    if(a){ e.preventDefault(); say('この操作はプロトタイプでは未実装です'); return; }
+    var b=e.target.closest('button');
+    if(b && b.getAttribute('aria-label')==='見る地域を変える'){ e.preventDefault(); openMenu(b); return; }
+    if(menu && !e.target.closest('.menu')) closeMenu();
+  });
+
+  /* area dropdown */
+  var menu=null, AREAS=['桜木町駅周辺','自宅（〇〇町）','現在地'];
+  function openMenu(btn){
+    closeMenu();
+    var label=btn.childNodes[0].textContent.trim();
+    menu=document.createElement('div'); menu.className='menu'; menu.setAttribute('role','menu');
+    AREAS.forEach(function(name){
+      var o=document.createElement('button'); o.type='button'; o.setAttribute('role','menuitemradio');
+      o.setAttribute('aria-checked', String(name===label)); o.textContent=name;
+      if(name===label){ var m=document.createElement('span'); m.textContent='✓'; o.appendChild(m); }
+      o.addEventListener('click',function(ev){ ev.stopPropagation();
+        device.querySelectorAll('button[aria-label="見る地域を変える"]').forEach(function(x){ x.childNodes[0].textContent=name; });
+        closeMenu(); say(name+'の情報を表示');
+      });
+      menu.appendChild(o);
+    });
+    var r=btn.getBoundingClientRect(), d=device.getBoundingClientRect(), k=scale||1;
+    menu.style.left=((r.left-d.left)/k)+'px'; menu.style.top=((r.bottom-d.top)/k+6)+'px';
+    device.appendChild(menu); menu.querySelector('button').focus();
+  }
+  function closeMenu(){ if(menu){ menu.remove(); menu=null; } }
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMenu(); });
+
+  /* time slider: drag the dot across 0–23時 */
+  function setSlider(sl,v){
+    v=Math.max(0,Math.min(23,Math.round(v)));
+    var thumb=sl.children[1]; thumb.style.left='calc('+(v/23*100).toFixed(1)+'% - 9px)';
+    sl.setAttribute('aria-valuenow',v); sl.setAttribute('aria-valuetext',v+'時');
+  }
+  device.querySelectorAll('[role="slider"]').forEach(function(sl){
+    function at(e){ var r=sl.getBoundingClientRect(); setSlider(sl,(e.clientX-r.left)/r.width*23); }
+    sl.addEventListener('pointerdown',function(e){ sl.setPointerCapture(e.pointerId); at(e);
+      function mv(ev){ at(ev); } function up(){ sl.removeEventListener('pointermove',mv); sl.removeEventListener('pointerup',up); say(sl.getAttribute('aria-valuenow')+'時の情報を表示'); }
+      sl.addEventListener('pointermove',mv); sl.addEventListener('pointerup',up);
+    });
+    sl.addEventListener('keydown',function(e){ var v=+sl.getAttribute('aria-valuenow');
+      if(e.key==='ArrowRight'||e.key==='ArrowUp'){ setSlider(sl,v+1); e.preventDefault(); }
+      if(e.key==='ArrowLeft'||e.key==='ArrowDown'){ setSlider(sl,v-1); e.preventDefault(); } });
+  });
+
+  /* fit the 390×844 device to the window */
+  var scale=1;
+  function fit(){
+    var w=stage.clientWidth, h=stage.clientHeight;
+    var narrow=window.innerWidth<=440;
+    scale=Math.min(1, w/390, narrow ? 10 : h/844);
+    var dh = narrow ? h/scale : 844;
+    device.style.height=dh+'px';
+    device.style.transform= scale<1 ? 'scale('+scale+')' : '';
+    device.style.marginBottom = scale<1 ? (-(dh*(1-scale)))+'px' : '';
+  }
+  window.addEventListener('resize',fit); fit(); route();
+})();
+</script>
+
+</body></html>
